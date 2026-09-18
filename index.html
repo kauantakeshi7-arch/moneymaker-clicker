@@ -311,13 +311,24 @@
 </div>
 
 <div id="economyModal" class="modal">
-    <div class="modal-content">
-        <h2>💹 Economia</h2>
-        <div class="modal-hint">
-            Crescimento geométrico (+15% a cada compra) — renda base 10× por tier
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash_upgrades.jpg" alt="Modelagem Econômica" class="modal-hero-bg" style="filter: brightness(0.8) hue-rotate(330deg);">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title">💹 ECONOMIA & ROI</div>
+                    <div class="modal-hero-sub">Projeção de fluxo, retorno por dólar e payback</div>
+                </div>
+            </div>
         </div>
-        <div id="economyContainer" style="max-height: 70vh; overflow-y: auto;"></div>
-        <button class="btn" data-action="closeModal" data-target="economyModal" style="width: 100%; margin-top: 12px;">Fechar</button>
+        <div class="modal-body-pad">
+            <div class="modal-hint">
+                Crescimento geométrico (+15% a cada compra) — renda base 10× por tier
+            </div>
+            <div id="economyContainer" class="modal-scroll" style="max-height: 52vh;"></div>
+            <button class="btn" data-action="closeModal" data-target="economyModal">Fechar</button>
+        </div>
     </div>
 </div>
 
@@ -366,75 +377,97 @@
     </div>
 </div>
 
-<div id="statsModal" class="modal">
-    <div class="modal-content">
-        <h2>📊 Estatísticas</h2>
-        <div id="statsContainer" class="stats-grid"></div>
-        <button class="btn" data-action="closeModal" data-target="statsModal" style="width: 100%;">Fechar</button>
+<div id="statsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="statsModalTitle">
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash_contracts.jpg" alt="Estatísticas e Métricas Globais" class="modal-hero-bg" style="filter: brightness(0.78) hue-rotate(185deg) contrast(1.15);">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title" id="statsModalTitle">📊 ESTATÍSTICAS GLOBAIS</div>
+                    <div class="modal-hero-sub">Métricas de rendimento, patrimônio e telemetria da firma</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body-pad">
+            <div id="statsContainer" class="stats-grid modal-scroll" style="max-height: 52vh;"></div>
+            <button class="btn" data-action="closeModal" data-target="statsModal">Fechar</button>
+        </div>
     </div>
 </div>
 
-<div id="settingsModal" class="modal">
-    <div class="modal-content">
-        <h2>⚙️ Configurações</h2>
-        <div class="settings-list">
-            <label class="setting-row">
-                <input type="checkbox" id="soundToggle" checked>
-                🔊 Efeitos Sonoros
-            </label>
-            <label class="setting-row">
-                <input type="checkbox" id="musicToggle">
-                🎵 Música Ambiente (Synthwave Lo-Fi)
-            </label>
-            <label class="setting-row">
-                <input type="checkbox" id="hapticsToggle" checked>
-                📳 Vibração Háptica
-            </label>
-            <label class="setting-row">
-                <input type="checkbox" id="notationToggle">
-                🔬 Notação Científica ($1.00e6)
-            </label>
-            <label class="setting-row">
-                <input type="checkbox" id="aiToggle" checked>
-                🤖 Automação (só negócios com Gerente contratado)
-            </label>
-            <div class="settings-group">
-                <div style="font-size: 9px; color: var(--text-secondary); margin-bottom: 6px;">Controles de Volume</div>
-                <div class="setting-slider-row">
-                    <span class="setting-slider-label">🔊 Volume SFX</span>
-                    <input type="range" id="soundVolumeSlider" min="0" max="1" step="0.05" value="0.8" class="cyber-slider">
-                </div>
-                <div class="setting-slider-row">
-                    <span class="setting-slider-label">🎵 Volume Música</span>
-                    <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.5" class="cyber-slider">
+<div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash.jpg" alt="Terminal de Ajustes e Configurações" class="modal-hero-bg" style="filter: brightness(0.72) hue-rotate(225deg) contrast(1.1);">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title" id="settingsModalTitle">⚙️ TERMINAL DE SISTEMA</div>
+                    <div class="modal-hero-sub">Áudio, automação de IA, notação e backups de save</div>
                 </div>
             </div>
-            <div class="settings-group">
-                <div style="font-size: 9px; color: var(--text-secondary); margin-bottom: 4px;">Gerenciamento de Save</div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-                    <button class="btn" data-action="copySave" style="font-size: 10px;">📋 Copiar Código</button>
-                    <button class="btn" data-action="importSaveText" style="font-size: 10px;">📥 Colar Código</button>
+        </div>
+        <div class="modal-body-pad">
+            <div class="settings-list modal-scroll" style="max-height: 52vh;">
+                <label class="setting-row">
+                    <input type="checkbox" id="soundToggle" checked>
+                    🔊 Efeitos Sonoros
+                </label>
+                <label class="setting-row">
+                    <input type="checkbox" id="musicToggle">
+                    🎵 Música Ambiente (Synthwave Lo-Fi)
+                </label>
+                <label class="setting-row">
+                    <input type="checkbox" id="hapticsToggle" checked>
+                    📳 Vibração Háptica
+                </label>
+                <label class="setting-row">
+                    <input type="checkbox" id="notationToggle">
+                    🔬 Notação Científica ($1.00e6)
+                </label>
+                <label class="setting-row">
+                    <input type="checkbox" id="aiToggle" checked>
+                    🤖 Automação (só negócios com Gerente contratado)
+                </label>
+                <div class="settings-group">
+                    <div style="font-size: 9px; color: var(--text-secondary); margin-bottom: 6px;">Controles de Volume</div>
+                    <div class="setting-slider-row">
+                        <span class="setting-slider-label">🔊 Volume SFX</span>
+                        <input type="range" id="soundVolumeSlider" min="0" max="1" step="0.05" value="0.8" class="cyber-slider">
+                    </div>
+                    <div class="setting-slider-row">
+                        <span class="setting-slider-label">🎵 Volume Música</span>
+                        <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.05" value="0.5" class="cyber-slider">
+                    </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
-                    <button class="btn" data-action="exportSave" style="font-size: 10px;">💾 Baixar .txt</button>
-                    <button class="btn" data-action="importSave" style="font-size: 10px;">📤 Subir .txt</button>
+                <div class="settings-group">
+                    <div style="font-size: 9px; color: var(--text-secondary); margin-bottom: 4px;">Gerenciamento de Save</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                        <button class="btn" data-action="copySave" style="font-size: 10px;">📋 Copiar Código</button>
+                        <button class="btn" data-action="importSaveText" style="font-size: 10px;">📥 Colar Código</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                        <button class="btn" data-action="exportSave" style="font-size: 10px;">💾 Baixar .txt</button>
+                        <button class="btn" data-action="importSave" style="font-size: 10px;">📤 Subir .txt</button>
+                    </div>
                 </div>
+                <button class="btn" data-action="resetGame" style="width: 100%; color: var(--danger); font-size: 10px;">🔄 Resetar Run Atual</button>
             </div>
-            <button class="btn" data-action="resetGame" style="width: 100%; color: var(--danger); font-size: 10px;">🔄 Resetar Run Atual</button>
-            <button class="btn" data-action="closeModal" data-target="settingsModal" style="width: 100%; margin-top: 10px; font-size: 10px;">Fechar</button>
+            <button class="btn" data-action="closeModal" data-target="settingsModal">Fechar</button>
         </div>
         <input type="file" id="importInput" style="display:none;" accept=".txt">
     </div>
 </div>
 
-<div id="offlineModal" class="modal">
+<div id="offlineModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="offlineModalTitle">
     <div class="modal-content modal-offline-card">
         <div class="modal-hero-banner modal-hero-offline">
-            <img src="assets/images/splash.jpg" alt="Metropolis" class="modal-hero-bg">
+            <img src="assets/images/splash_prestige.jpg" alt="Mercado Global Noturno" class="modal-hero-bg" style="filter: brightness(0.68) hue-rotate(200deg) contrast(1.15);">
             <div class="modal-hero-gradient"></div>
             <div class="modal-hero-content center">
                 <div class="modal-hero-icon">🌙</div>
-                <div class="modal-hero-title">Relatório Executivo</div>
+                <div class="modal-hero-title" id="offlineModalTitle">Relatório Executivo</div>
             </div>
         </div>
         <div class="modal-offline-body">
