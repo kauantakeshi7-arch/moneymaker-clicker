@@ -1,16 +1,10 @@
-// Referências de DOM e escrita com verificação de mudança.
-//
-// O render roda a cada frame: buscar os mesmos elementos e reescrever texto
-// idêntico custava recálculo de estilo à toa.
-
-
-// Referências de DOM resolvidas uma vez. O loop roda 10×/s: buscar os mesmos
-// ~60 elementos por frame era puro desperdício.
+// Referências de DOM resolvidas uma vez. O loop de render roda a cada frame:
+// buscar os mesmos elementos por frame era puro desperdício de layout.
 export const el = {};
 const CACHED_IDS = ['moneyDisplay','totalEarned','clickCount','comboDisplay','comboValue','multValue',
     'businessCount','prestigeDisplay','mpsDisplay','nextPrestigeCost','timeToPrestige','prestigeBtn',
     'prestigeProgressFill','prestigeProgressLabel','upgradeBadge','prestigePointBadge','chartContainer',
-    'upgradesContainer','achBadge','aiToggle','soundToggle','skylineCount'];
+    'upgradesContainer','achBadge','aiToggle','soundToggle','skylineCount','importInput','clickButton'];
 
 export function cacheDomRefs() {
     for (const id of CACHED_IDS) el[id] = document.getElementById(id);

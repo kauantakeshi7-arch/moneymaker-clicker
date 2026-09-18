@@ -6,7 +6,8 @@
 
 import {
     upgrades, MONEY_UPGRADES, COST_GROWTH, MILESTONE_TIERS,
-    defaultPrestigeShopLevels, getPrestigeCostForLevel, totalOwned
+    defaultPrestigeShopLevels, getPrestigeCostForLevel, getPrestigeMultiplierForLevel,
+    COMBO_TIMEOUT_MS, totalOwned
 } from '../js/config.js';
 import { gameState } from '../js/state.js';
 import { formatNumber } from '../js/utils.js';
@@ -15,7 +16,7 @@ import {
     getBulkCost, getMaxAffordable, getBestBuyIndex, isBusinessUnlocked,
     getEffectiveMultiplier, getSynergyMultiplier, isFeverActive,
     pendingPrestigePoints, prestige, applyOfflineProgress,
-    getUpgradeMilestoneMult, getCritChance, getManagerCost
+    getUpgradeMilestoneMult, getCritChance, getManagerCost, runAI
 } from '../js/economy.js';
 
 const tests = [];
@@ -30,6 +31,7 @@ const close = (a, b, tol = 1e-6) => Math.abs(a - b) <= tol;
 function reset() {
     gameState.money = 0;
     gameState.totalEarned = 0;
+    gameState.runEarned = 0;
     gameState.prestigeLevel = 0;
     gameState.prestigePoints = 0;
     gameState.lifetimePrestigePoints = 0;
@@ -178,6 +180,7 @@ test('pontos de prestígio crescem em escala logarítmica', () => {
 test('prestígio zera a run e credita as recompensas da loja', () => {
     reset();
     gameState.totalEarned = 5e9;
+    gameState.runEarned = 5e9;
     gameState.money = 1e6;
     gameState.runUpgrades = ['biz0_a'];
     gameState.prestigeShopLevels.startingCash = 3;
@@ -191,6 +194,7 @@ test('prestígio zera a run e credita as recompensas da loja', () => {
     assert(callbackChamado, 'callback de UI não foi chamado');
     assert(gameState.prestigeLevel === 1, 'nível não subiu', gameState.prestigeLevel);
     assert(gameState.prestigePoints === 29, 'pontos errados', gameState.prestigePoints);
+    assert(gameState.runEarned === 0, 'runEarned deveria zerar no prestígio');
     assert(upgrades.every(u => u.owned === 0), 'negócios deveriam zerar');
     assert(gameState.runUpgrades.length === 0, 'upgrades de run deveriam zerar');
     assert(gameState.money === 100000, 'capital inicial não aplicado', gameState.money);
@@ -198,11 +202,28 @@ test('prestígio zera a run e credita as recompensas da loja', () => {
         'gerentes grátis errados', upgrades.map(u => u.manager));
 });
 
-test('prestígio é bloqueado abaixo do custo', () => {
+test('prestígio é bloqueado abaixo do custo da run atual', () => {
     reset();
-    gameState.totalEarned = 1000;
-    assert(prestige(() => {}) === false, 'não deveria prestigiar');
+    gameState.totalEarned = 1e10; // ganho vitalício alto
+    gameState.runEarned = 1000;   // mas a run atual começou agora
+    assert(prestige(() => {}) === false, 'não deveria prestigiar sem cumprir o custo na run');
     assert(gameState.prestigeLevel === 0, 'nível mudou mesmo bloqueado');
+});
+
+test('custo de prestígio e multiplicador não estouram para Infinity no nível 600', () => {
+    const cost = getPrestigeCostForLevel(600);
+    const mult = getPrestigeMultiplierForLevel(600);
+    assert(Number.isFinite(cost), 'custo deve ser finito', cost);
+    assert(Number.isFinite(mult), 'mult deve ser finito', mult);
+});
+
+test('autobuyer da IA nunca compra negócio bloqueado', () => {
+    reset();
+    upgrades[1].manager = true; // gerente do negócio 1 ativo (ex: por prestige shop)
+    upgrades[0].owned = 0;       // negócio 0 com 0 unidades (negócio 1 está BLOQUEADO)
+    gameState.money = 1e6;       // dinheiro de sobra
+    runAI();
+    assert(upgrades[1].owned === 0, 'IA comprou negócio bloqueado', upgrades[1].owned);
 });
 
 test('custo de prestígio usa o próximo nível, não o atual', () => {
@@ -239,6 +260,7 @@ test('save e load preservam o estado, inclusive frações', () => {
     reset();
     gameState.money = 1234.56;
     gameState.prestigePoints = 9;
+    gameState.maxCombo = 42;
     gameState.runUpgrades = ['click_a'];
     upgrades[1].owned = 7;
     upgrades[1].manager = true;
@@ -249,6 +271,7 @@ test('save e load preservam o estado, inclusive frações', () => {
 
     assert(close(gameState.money, 1234.56, 0.01), 'dinheiro perdeu precisão', gameState.money);
     assert(gameState.prestigePoints === 9, 'pontos não voltaram');
+    assert(gameState.maxCombo === 42, 'maxCombo não voltou', gameState.maxCombo);
     assert(gameState.runUpgrades[0] === 'click_a', 'upgrades de run não voltaram');
     assert(upgrades[1].owned === 7 && upgrades[1].manager, 'negócios não voltaram');
     assert(typeof ts === 'number', 'load deveria devolver o instante do save', ts);
@@ -334,8 +357,12 @@ export function runSuite() {
     }
 
     reset();
-    if (saved) localStorage.setItem('mm_save_v15', saved);
-    else localStorage.removeItem('mm_save_v15');
+    if (saved) {
+        localStorage.setItem('mm_save_v15', saved);
+        gameState.load();
+    } else {
+        localStorage.removeItem('mm_save_v15');
+    }
 
     return { total: results.length, failed: results.filter(r => !r.ok).length, results };
 }

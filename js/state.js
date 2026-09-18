@@ -11,6 +11,7 @@ export class GameState {
     constructor() {
         this.money = 0;
         this.totalEarned = 0;
+        this.runEarned = 0;
         this.clickCount = 0;
         this.prestigeLevel = 0;
         this.combo = 1;
@@ -31,11 +32,14 @@ export class GameState {
         // dinheiro é float: arredondar por tick destruía toda renda fracionária
         if (!Number.isFinite(this.money)) this.money = 0;
         if (!Number.isFinite(this.totalEarned)) this.totalEarned = 0;
+        if (!Number.isFinite(this.runEarned)) this.runEarned = 0;
         this.money = Math.min(Math.max(0, this.money), MONEY_CAP);
         this.totalEarned = Math.min(Math.max(0, this.totalEarned), MONEY_CAP);
+        this.runEarned = Math.min(Math.max(0, this.runEarned), MONEY_CAP);
         this.clickCount = Math.max(0, Math.floor(this.clickCount));
         this.prestigeLevel = Math.max(0, Math.floor(this.prestigeLevel || 0));
         this.combo = Math.max(1, Math.min(this.combo || 1, 999));
+        this.maxCombo = Math.max(this.combo, Math.max(1, Math.min(this.maxCombo || 1, 999)));
         this.prestigePoints = Math.max(0, Math.floor(this.prestigePoints || 0));
         this.lifetimePrestigePoints = Math.max(0, Math.floor(this.lifetimePrestigePoints || 0));
         if (!this.prestigeShopLevels) this.prestigeShopLevels = defaultPrestigeShopLevels();
@@ -52,9 +56,12 @@ export class GameState {
             localStorage.setItem(SAVE_KEY, JSON.stringify({
                 money: this.money,
                 totalEarned: this.totalEarned,
+                runEarned: this.runEarned,
                 clickCount: Math.floor(this.clickCount),
                 prestigeLevel: Math.floor(this.prestigeLevel),
                 combo: Math.max(1, Math.min(Math.floor(this.combo), 999)),
+                maxCombo: Math.max(1, Math.min(Math.floor(this.maxCombo || 1), 999)),
+                lastClickTime: this.lastClickTime || 0,
                 upgrades: upgrades.map(u => ({ owned: Math.max(0, Math.floor(u.owned)), manager: !!u.manager })),
                 unlockedAchievements: this.unlockedAchievements.slice(),
                 prestigePoints: Math.floor(this.prestigePoints),
@@ -76,9 +83,12 @@ export class GameState {
 
             this.money = data.money || 0;
             this.totalEarned = data.totalEarned || 0;
+            this.runEarned = data.runEarned !== undefined ? data.runEarned : (data.totalEarned || 0);
             this.clickCount = data.clickCount || 0;
             this.prestigeLevel = data.prestigeLevel || 0;
             this.combo = data.combo || 1;
+            this.maxCombo = data.maxCombo || Math.max(data.combo || 1, this.maxCombo || 1);
+            this.lastClickTime = data.lastClickTime || 0;
             this.prestigePoints = data.prestigePoints || 0;
             this.lifetimePrestigePoints = data.lifetimePrestigePoints || 0;
 
@@ -118,8 +128,8 @@ export class GameState {
 
     isValidSaveShape(data) {
         if (!data || typeof data !== 'object') return false;
-        for (const f of ['money', 'totalEarned', 'clickCount', 'prestigeLevel', 'combo']) {
-            if (data[f] !== undefined && typeof data[f] !== 'number') return false;
+        for (const f of ['money', 'totalEarned', 'clickCount', 'prestigeLevel', 'combo', 'maxCombo', 'runEarned']) {
+            if (data[f] !== undefined && (typeof data[f] !== 'number' || !Number.isFinite(data[f]))) return false;
         }
         if (data.upgrades !== undefined && !Array.isArray(data.upgrades)) return false;
         if (data.unlockedAchievements !== undefined && !Array.isArray(data.unlockedAchievements)) return false;

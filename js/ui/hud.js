@@ -35,10 +35,6 @@ export function resetUnlockTracking() {
 export function updateDisplay() {
     gameState.validate();
 
-    if (gameState.combo > 1 && Date.now() - gameState.lastClickTime > 1000) {
-        gameState.combo = 1;
-    }
-
     const mult = getEffectiveMultiplier();
     const rawDps = getRawDPS();
     const dps = rawDps * mult;
@@ -67,26 +63,32 @@ export function updateDisplay() {
 
     const nextCost = getPrestigeCostForLevel(gameState.prestigeLevel + 1);
     setText(el.nextPrestigeCost, formatNumber(nextCost));
-    const pct = Math.min(100, (gameState.totalEarned / nextCost) * 100);
+    const runEarned = gameState.runEarned !== undefined ? gameState.runEarned : gameState.totalEarned;
+    const pct = Math.min(100, (runEarned / nextCost) * 100);
     const pctStr = pct.toFixed(1) + '%';
     if (el.prestigeProgressFill._last !== pctStr) {
         el.prestigeProgressFill.style.width = pctStr;
         el.prestigeProgressFill._last = pctStr;
     }
     setHtml(el.prestigeProgressLabel,
-        `${formatNumber(gameState.totalEarned)} / ${formatNumber(nextCost)} (${pctStr})` +
+        `${formatNumber(runEarned)} / ${formatNumber(nextCost)} (${pctStr})` +
         ` — prestigiar agora rende <span style="color: var(--gold); font-weight: bold;">${pendingPrestigePoints()} 💎</span>`);
 
-    if (dps > 0) {
-        const seconds = Math.max(0, nextCost - gameState.totalEarned) / dps;
+    if (runEarned >= nextCost) {
+        setText(el.timeToPrestige, 'PRONTO!');
+    } else if (dps > 0) {
+        const seconds = Math.max(0, nextCost - runEarned) / dps;
         let timeStr;
-        if (seconds < 3600) timeStr = Math.ceil(seconds / 60) + 'm';
+        if (seconds < 60) timeStr = Math.ceil(seconds) + 's';
+        else if (seconds < 3600) timeStr = Math.ceil(seconds / 60) + 'm';
         else if (seconds < 86400) timeStr = Math.ceil(seconds / 3600) + 'h';
         else timeStr = Math.ceil(seconds / 86400) + 'd';
         setText(el.timeToPrestige, timeStr);
+    } else {
+        setText(el.timeToPrestige, '--');
     }
 
-    const canPrestige = gameState.totalEarned >= nextCost;
+    const canPrestige = runEarned >= nextCost;
     // Só o estado muda: o ícone e o rótulo do botão são fixos no HTML.
     el.prestigeBtn.disabled = !canPrestige;
     el.prestigeBtn.classList.toggle('ready', canPrestige);
@@ -130,9 +132,9 @@ export function updateDisplay() {
     updateManagerButtons();
 
     // Os badges percorrem os 29 upgrades chamando closures de requisito: a cada
-    // 500ms é o bastante, não precisa ser a cada frame.
+    // 500ms é o bastante (30 frames a 60fps), não precisa ser a cada frame.
     if (--badgeThrottle <= 0) {
-        badgeThrottle = 5;
+        badgeThrottle = 30;
         let affordable = 0;
         for (const up of MONEY_UPGRADES) {
             if (!gameState.hasUpgrade(up.id) && gameState.money >= up.cost && up.req(gameState)) affordable++;

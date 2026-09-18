@@ -1,26 +1,28 @@
 // Sparkline da renda, desenhado à mão em canvas.
-
-import { gameState } from '../state.js';
+ 
 import { formatNumber } from '../utils.js';
 import { el } from './dom.js';
 
 // ============ SPARKLINE ============
-// Canvas próprio no lugar do Chart.js: eram 57KB de dependência para desenhar
-// 5 pontos. Aqui cabem 60 amostras (30s de histórico) em ~40 linhas.
+// Canvas próprio no lugar do Chart.js: 60 amostras cobrem exatamente 30 segundos
+// de histórico de fluxo de renda (amostrado a cada 500ms).
 const CHART_POINTS = 60;
 const chartHistory = new Array(CHART_POINTS).fill(0);
 let chartCanvas = null, chartCtx = null;
+let chartDirty = true;
 
 export function initChart() {
     chartCanvas = document.getElementById('progressChart');
     chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
+    chartDirty = true;
 }
 
-// Amostrar é barato (push/shift), então roda sempre: ao abrir o painel
-// o histórico já está cheio em vez de começar vazio.
-export function recordChartSample() {
-    chartHistory.push(Number.isFinite(gameState.money) ? Math.max(0, gameState.money) : 0);
+// Amostrado a cada 500ms pelo loop de simulação
+export function recordChartSample(currentDps = 0) {
+    const val = Number.isFinite(currentDps) ? Math.max(0, currentDps) : 0;
+    chartHistory.push(val);
     chartHistory.shift();
+    chartDirty = true;
 }
 
 export function drawChart() {
@@ -29,7 +31,11 @@ export function drawChart() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = chartCanvas.clientWidth, h = chartCanvas.clientHeight;
     if (!w || !h) return;
-    if (chartCanvas.width !== w * dpr || chartCanvas.height !== h * dpr) {
+    const resized = chartCanvas.width !== w * dpr || chartCanvas.height !== h * dpr;
+    if (!chartDirty && !resized) return;
+    chartDirty = false;
+
+    if (resized) {
         chartCanvas.width = w * dpr;
         chartCanvas.height = h * dpr;
     }
@@ -40,10 +46,10 @@ export function drawChart() {
 
     let max = 0, min = Infinity;
     for (const v of chartHistory) { if (v > max) max = v; if (v < min) min = v; }
-    if (max <= 0) return;
+    if (min === Infinity) min = 0;
     if (min === max) min = 0;
 
-    const range = max - min || 1;
+    const range = (max - min) || 1;
     const px = i => (i / (CHART_POINTS - 1)) * w;
     const py = v => h - 6 - ((v - min) / range) * (h - 24);
 
@@ -70,12 +76,12 @@ export function drawChart() {
 
     ctx.fillStyle = '#aaaaaa';
     ctx.font = '10px "JetBrains Mono", monospace';
-    ctx.fillText(formatNumber(max), 4, 12);
+    ctx.fillText(formatNumber(max) + '/s', 4, 12);
     ctx.fillText('← 30s', 4, h - 4);
 }
 
 export function toggleChart() {
     el.chartContainer.classList.toggle('active');
+    chartDirty = true;
     drawChart();
 }
-

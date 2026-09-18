@@ -33,6 +33,7 @@ export const MILESTONE_TIERS = [[50, 4], [25, 2.5], [10, 2]];
 export const BUSINESS_UNLOCK_THRESHOLD = 5;  // unidades do anterior para liberar o próximo
 export const FEVER_COMBO_THRESHOLD = 50;
 export const COMBO_MILESTONES = [10, 25, 50, 100];
+export const COMBO_TIMEOUT_MS = 1000;         // tolerância de tempo para sustentar o combo
 export const BASE_CRIT_CHANCE = 0.05;
 export const BASE_CRIT_MULTIPLIER = 15;
 export const BASE_CLICK_PERCENT = 0.05;      // clique vale % da renda passiva
@@ -46,12 +47,14 @@ const PRESTIGE_COSTS = [0, 1e6, 5e6, 2e7, 8e7, 3.2e8, 1.28e9, 5.12e9, 2.048e10, 
 
 export function getPrestigeMultiplierForLevel(level) {
     if (level <= 10) return PRESTIGE_MULTIPLIERS[level];
-    return PRESTIGE_MULTIPLIERS[10] * Math.pow(1.15, level - 10);
+    return PRESTIGE_MULTIPLIERS[10] * Math.pow(1.15, Math.min(4000, level - 10));
 }
 
 export function getPrestigeCostForLevel(level) {
     if (level <= 10) return PRESTIGE_COSTS[level];
-    return PRESTIGE_COSTS[10] * Math.pow(4, level - 10);
+    const exp = Math.min(480, level - 10);
+    const raw = PRESTIGE_COSTS[10] * Math.pow(4, exp);
+    return Math.min(MONEY_CAP, raw);
 }
 
 export function defaultPrestigeShopLevels() {

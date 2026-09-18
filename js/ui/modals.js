@@ -12,6 +12,8 @@ import {
     getClickValue, getRawDPS, getUpgradeCost, getUpgradeIncome
 } from '../economy.js';
 import { createUpgradeButtons } from './businesses.js';
+import { resetUnlockTracking } from './hud.js';
+import { syncSkyline } from '../skyline.js';
 
 export function updateEconomy() {
     const container = document.getElementById('economyContainer');
@@ -19,7 +21,6 @@ export function updateEconomy() {
         const cost = getUpgradeCost(i);
         const income = getUpgradeIncome(i);
         const payback = Math.ceil(cost / income);
-        const roi = (income / cost).toFixed(5);
         
         let paybackStr = payback + 's';
         if (payback >= 60) paybackStr = (payback / 60).toFixed(1) + 'm';
@@ -215,19 +216,34 @@ export function exportSave() {
         const link = document.createElement('a');
         link.href = 'data:text/plain,' + encodeURIComponent(data);
         link.download = 'moneymaker_' + Date.now() + '.txt';
+        document.body.appendChild(link);
         link.click();
+        link.remove();
     } catch (e) { alert('Erro!'); }
 }
 
 export function resetGame() {
     if (!confirm('Reiniciar a run atual? Você mantém prestígio, pontos 💎 e conquistas.')) return;
-    gameState.money = 0;
     gameState.clickCount = 0;
     gameState.combo = 1;
     gameState.lastComboMilestone = 0;
     gameState.runUpgrades = [];
+    gameState.tempBoostExpiry = 0;
     upgrades.forEach(u => { u.owned = 0; u.manager = false; });
+
+    // Honra os bônus permanentes da Loja de Prestígio
+    const shop = gameState.prestigeShopLevels;
+    const startCash = PRESTIGE_SHOP.find(i => i.id === 'startingCash');
+    gameState.money = startCash ? startCash.valueFor(shop.startingCash) : 0;
+    for (let i = 0; i < shop.freeManagers && i < upgrades.length; i++) {
+        upgrades[i].manager = true;
+    }
+
     createUpgradeButtons();
+    resetUnlockTracking();
+    syncSkyline();
+    gameState.save();
+    closeModal('settingsModal');
     showNotification('Run reiniciada!', '🔄');
 }
 

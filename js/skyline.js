@@ -4,7 +4,7 @@
 // que mudou. Assim comprar, prestigiar ou carregar um save continuam
 // funcionando sem precisar avisar o cenário em cada lugar do código.
 
-import { upgrades } from './config.js';
+import { upgrades, BUSINESS_UNLOCK_THRESHOLD } from './config.js';
 import { gameState } from './state.js';
 
 // Cada tier tem silhueta própria, para a cidade contar em que fase você está.
@@ -42,7 +42,7 @@ export function initSkyline() {
         tw: rand(i * 2.2) * 6.28
     }));
     lastCounts = upgrades.map(() => 0);
-    lastUnlocked = upgrades.map(() => false);
+    lastUnlocked = upgrades.map((u, i) => i === 0 || u.owned > 0 || (i > 0 && upgrades[i - 1].owned >= BUSINESS_UNLOCK_THRESHOLD));
     syncSkyline(true);
     ready = true;
 }
@@ -125,7 +125,7 @@ export function drawSkyline(now) {
 
 function detectUnlocks() {
     upgrades.forEach((u, i) => {
-        const unlocked = i === 0 || u.owned > 0 || upgrades[i - 1].owned >= 5;
+        const unlocked = i === 0 || u.owned > 0 || (i > 0 && upgrades[i - 1].owned >= BUSINESS_UNLOCK_THRESHOLD);
         if (unlocked && !lastUnlocked[i] && lastUnlocked.some(Boolean)) celebrateUnlock(i);
         lastUnlocked[i] = unlocked;
     });
@@ -269,8 +269,8 @@ function drawBeams(w, groundY, now) {
         const t = (now - beam.at) / 1400;
         const targets = buildings.filter(b => b.tier === beam.tier);
         const b = targets[0];
-        if (!b) continue;
-        const x = 6 + b.slot * Math.max(1, w - 20);
+        const slot = b ? b.slot : rand(beam.tier * 97);
+        const x = 6 + slot * Math.max(1, w - 20);
         const g = ctx.createLinearGradient(x, 0, x, groundY);
         const a = Math.sin(t * Math.PI) * 0.55;
         g.addColorStop(0, `rgba(0,255,180,0)`);

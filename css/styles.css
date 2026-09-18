@@ -282,7 +282,6 @@ main > * { flex-shrink: 0; }
         0 -4px 12px rgba(0,60,90,0.4) inset,
         0 0 26px rgba(0,212,255,0.35);
 }
-#clickButton:active { transform: scale(0.90); }
 
 .click-particle {
     position: fixed; pointer-events: none; z-index: 500;

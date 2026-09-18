@@ -57,6 +57,14 @@ export function createUpgradeButtons() {
             if (e.target.closest('.manager-btn')) return;
             buyUpgrade(i, e);
         });
+        card.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                if (e.target.closest('.manager-btn')) return;
+                e.preventDefault();
+                e.stopPropagation();
+                buyUpgrade(i, e);
+            }
+        });
         container.appendChild(card);
 
         const refs = {
@@ -79,7 +87,7 @@ export function createUpgradeButtons() {
 
 export function buyUpgrade(idx, e) {
     if (!isBusinessUnlocked(idx)) return;
-    const card = e.target.closest('.upgrade-btn');
+    const card = (e && e.target) ? (e.target.closest('.upgrade-btn') || e.currentTarget) : cardRefs[idx]?.card;
 
     const qty = Math.max(1, getBuyQuantity(idx));
     const cost = getBulkCost(idx, qty);
@@ -90,8 +98,10 @@ export function buyUpgrade(idx, e) {
     upgrades[idx].owned += qty;
     const newMult = getUpgradeMilestoneMult(idx);
 
-    card.classList.add('just-bought');
-    setTimeout(() => card.classList.remove('just-bought'), 400);
+    if (card) {
+        card.classList.add('just-bought');
+        setTimeout(() => card.classList.remove('just-bought'), 400);
+    }
 
     if (newMult > prevMult) {
         showBanner('Marco atingido', `${upgrades[idx].name} ×${newMult}`,

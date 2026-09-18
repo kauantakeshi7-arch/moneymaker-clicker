@@ -24,10 +24,25 @@ export function formatNumber(n) {
 let soundEnabled = true;
 export function setSoundEnabled(value) { soundEnabled = !!value; }
 
+// Singleton de AudioContext reutilizável: evita estourar o limite de contextos do navegador
+let audioCtx = null;
+function getAudioContext() {
+    if (typeof window === 'undefined') return null;
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+}
+
 export function playSound(freq = 800, duration = 100) {
-    if (!soundEnabled) return;
+    if (!soundEnabled || typeof window === 'undefined') return;
     try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = getAudioContext();
+        if (!ctx) return;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
@@ -42,6 +57,7 @@ export function playSound(freq = 800, duration = 100) {
 
 /** Faixa central para acontecimentos grandes — um toast de canto não dá conta. */
 export function showBanner(kicker, title, sub = '', gold = false) {
+    if (typeof document === 'undefined') return;
     const node = document.createElement('div');
     node.className = 'banner' + (gold ? ' gold' : '');
     node.innerHTML =
@@ -54,6 +70,7 @@ export function showBanner(kicker, title, sub = '', gold = false) {
 
 /** Onda de choque a partir do centro da tela. */
 export function shockwave(color) {
+    if (typeof document === 'undefined') return;
     const node = document.createElement('div');
     node.className = 'shockwave';
     if (color) node.style.borderColor = color;
@@ -61,17 +78,44 @@ export function shockwave(color) {
     setTimeout(() => node.remove(), 950);
 }
 
-let toastCount = 0;
+const MAX_TOASTS = 4;
+let activeToasts = [];
+
+function repositionToasts() {
+    activeToasts.forEach((t, i) => {
+        t.style.bottom = (20 + i * 56) + 'px';
+    });
+}
+
 export function showNotification(text, icon = '✨', duration = 2500) {
+    if (typeof document === 'undefined') return;
+
+    // Remove os mais antigos se exceder o limite visual
+    while (activeToasts.length >= MAX_TOASTS) {
+        const oldest = activeToasts.shift();
+        if (oldest) {
+            if (oldest._timer) clearTimeout(oldest._timer);
+            if (oldest._leaveTimer) clearTimeout(oldest._leaveTimer);
+            if (oldest.parentNode) oldest.remove();
+        }
+    }
+
     const node = document.createElement('div');
     node.className = 'toast';
-    node.style.bottom = (20 + toastCount * 56) + 'px';
     node.innerHTML = `<span class="toast-icon">${icon}</span><span>${text}</span>`;
     document.body.appendChild(node);
-    toastCount++;
+    activeToasts.push(node);
+    repositionToasts();
+
     playSound(2000, 150);
-    setTimeout(() => {
+
+    node._timer = setTimeout(() => {
         node.classList.add('leaving');
-        setTimeout(() => { node.remove(); toastCount = Math.max(0, toastCount - 1); }, 250);
+        node._leaveTimer = setTimeout(() => {
+            if (node.parentNode) node.remove();
+            activeToasts = activeToasts.filter(t => t !== node);
+            repositionToasts();
+        }, 250);
     }, duration);
 }
+

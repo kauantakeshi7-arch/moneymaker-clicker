@@ -70,8 +70,16 @@ function spawnAmbientMote() {
     pixiApp.ticker.add(tick);
 }
 
+let activeClickParticles = 0;
+const MAX_CLICK_PARTICLES = 25;
+
 export function spawnClickParticle(amount, x, y, isCrit = false) {
+    if (typeof document === 'undefined') return;
+    if (activeClickParticles >= MAX_CLICK_PARTICLES && !isCrit) return;
+
+    activeClickParticles++;
     if (!pixiApp) return spawnClickParticleDOM(amount, x, y, isCrit);
+
     const text = new PIXI.Text({
         text: (isCrit ? 'CRÍTICO! ' : '') + '+' + formatNumber(amount),
         style: {
@@ -96,12 +104,14 @@ export function spawnClickParticle(amount, x, y, isCrit = false) {
         if (t >= 1) {
             pixiApp.stage.removeChild(text); text.destroy();
             pixiApp.ticker.remove(tick);
+            activeClickParticles = Math.max(0, activeClickParticles - 1);
         }
     };
     pixiApp.ticker.add(tick);
 }
 
 export function spawnConfetti() {
+    if (typeof document === 'undefined') return;
     if (!pixiApp) return spawnConfettiDOM();
     const colors = [0xffd700, 0x00d4ff, 0x00ff88, 0xffaa00, 0xb366ff];
     const pieces = [];
@@ -137,16 +147,21 @@ export function spawnConfetti() {
 // ============ FALLBACK EM DOM ============
 // Usado quando o PixiJS não carrega. Mesma leitura visual, via CSS.
 function spawnClickParticleDOM(amount, x, y, isCrit = false) {
+    if (typeof document === 'undefined') return;
     const node = document.createElement('div');
     node.className = 'click-particle' + (isCrit ? ' crit' : '');
     node.textContent = (isCrit ? 'CRÍTICO! ' : '') + '+' + formatNumber(amount);
     node.style.left = (x + (Math.random() * 40 - 20)) + 'px';
     node.style.top = y + 'px';
     document.body.appendChild(node);
-    setTimeout(() => node.remove(), 900);
+    setTimeout(() => {
+        if (node.parentNode) node.remove();
+        activeClickParticles = Math.max(0, activeClickParticles - 1);
+    }, 900);
 }
 
 function spawnConfettiDOM() {
+    if (typeof document === 'undefined') return;
     const colors = ['#ffd700', '#00d4ff', '#00ff88', '#ffaa00', '#b366ff'];
     const count = isSmallScreen() ? 20 : 40;
     for (let i = 0; i < count; i++) {
@@ -158,6 +173,8 @@ function spawnConfettiDOM() {
         node.style.animationDuration = (1.8 + Math.random() * 1.4) + 's';
         node.style.animationDelay = (Math.random() * 0.3) + 's';
         document.body.appendChild(node);
-        setTimeout(() => node.remove(), 3500);
+        setTimeout(() => {
+            if (node.parentNode) node.remove();
+        }, 3500);
     }
 }

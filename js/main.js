@@ -1,6 +1,6 @@
 // Ponto de entrada: liga os eventos da interface e roda os loops.
 
-import { SAVE_KEY } from './config.js';
+import { SAVE_KEY, COMBO_TIMEOUT_MS } from './config.js';
 import { gameState } from './state.js';
 import { formatNumber, showNotification, playSound, setSoundEnabled, showBanner, shockwave } from './utils.js';
 import { initPixiEngine, spawnClickParticle } from './vfx.js';
@@ -55,7 +55,7 @@ const ACTIONS = {
     buyUpgrade: target => buyMoneyUpgrade(target),
     buyPrestige: target => buyPrestigeShopItem(target),
     exportSave,
-    importSave: () => document.getElementById('importInput').click(),
+    importSave: () => (el.importInput || document.getElementById('importInput')).click(),
     resetGame
 };
 
@@ -86,9 +86,11 @@ function handleMainClick(e) {
 // ============ TECLADO ============
 window.addEventListener('keydown', (e) => {
     const modalOpen = !!document.querySelector('.modal.active');
-    if ((e.key === ' ' || e.key === 'Enter') && !modalOpen) {
+    const isInteractive = ['BUTTON', 'INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)
+        || document.activeElement?.classList?.contains('upgrade-btn');
+    if ((e.key === ' ' || e.key === 'Enter') && !modalOpen && !isInteractive) {
         e.preventDefault();
-        document.getElementById('clickButton').click();
+        (el.clickButton || document.getElementById('clickButton')).click();
         return;
     }
     if (e.key === 'Escape') {
@@ -148,8 +150,8 @@ function init() {
         localStorage.setItem('aiEnabled', e.target.checked);
         setAutomationEnabled(e.target.checked);
     });
-    document.getElementById('clickButton').addEventListener('click', handleMainClick);
-    document.getElementById('importInput').addEventListener('change', handleSaveImport);
+    el.clickButton.addEventListener('click', handleMainClick);
+    el.importInput.addEventListener('change', handleSaveImport);
 
     createUpgradeButtons();
     initChart();
@@ -194,6 +196,7 @@ const AUTOSAVE_MS = 1000;
 
 let lastTickTime = Date.now();
 let saveAccumulator = 0;
+let chartSampleTimer = 0;
 let goldenEventTimer = 0;
 let nextGoldenEventAt = 40000 + Math.random() * 40000;
 
@@ -204,15 +207,28 @@ function simulationTick() {
     if (!Number.isFinite(deltaMs) || deltaMs < 0) deltaMs = 0;
     deltaMs = Math.min(deltaMs, MAX_CATCHUP_MS);
 
+    // O decaimento do combo roda no tempo real da simulação
+    if (gameState.combo > 1 && now - gameState.lastClickTime > COMBO_TIMEOUT_MS) {
+        gameState.combo = 1;
+    }
+
     gameState.validate();
 
     const rawDps = getRawDPS();
+    const effectiveMult = getEffectiveMultiplier();
     if (rawDps > 0 && Number.isFinite(rawDps)) addMoney(rawDps * (deltaMs / 1000));
 
     tickGoldenEvents(deltaMs);
     runAI();
     checkAchievements(showAchievementBadge);
-    recordChartSample();
+
+    // 60 amostras a cada 500ms = histórico fiel de 30s de renda
+    chartSampleTimer += deltaMs;
+    if (chartSampleTimer >= 500) {
+        recordChartSample(rawDps * effectiveMult);
+        chartSampleTimer = 0;
+    }
+
     syncSkyline();
     pruneSkyline();
 
@@ -224,6 +240,7 @@ function simulationTick() {
 }
 
 function tickGoldenEvents(deltaMs) {
+    if (document.querySelector('.modal.active')) return;
     const rate = getRunEffectValue('goldenRate', 1)
         * (1 - gameState.prestigeShopLevels.goldenLuck * 0.15);
     goldenEventTimer += deltaMs;

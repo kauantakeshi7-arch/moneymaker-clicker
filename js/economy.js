@@ -5,7 +5,7 @@
 import {
     upgrades, MONEY_CAP, COST_GROWTH, MILESTONE_TIERS, MONEY_UPGRADES_BY_ID,
     ACHIEVEMENTS, PRESTIGE_SHOP, COMBO_MILESTONES, FEVER_COMBO_THRESHOLD,
-    BUSINESS_UNLOCK_THRESHOLD, BASE_CRIT_CHANCE, BASE_CRIT_MULTIPLIER,
+    COMBO_TIMEOUT_MS, BUSINESS_UNLOCK_THRESHOLD, BASE_CRIT_CHANCE, BASE_CRIT_MULTIPLIER,
     BASE_CLICK_PERCENT, MANAGER_COST_FACTOR, OFFLINE_CAP_SECONDS,
     OFFLINE_BASE_EFFICIENCY, getPrestigeCostForLevel, getPrestigeMultiplierForLevel
 } from './config.js';
@@ -99,7 +99,7 @@ export function getCritMultiplier() {
 // ============ NEGÓCIOS ============
 export function getUpgradeCost(idx) {
     const u = upgrades[idx];
-    return u.baseCost * Math.pow(COST_GROWTH, u.owned);
+    return Math.min(MONEY_CAP, u.baseCost * Math.pow(COST_GROWTH, Math.min(u.owned, 4500)));
 }
 
 /** Custo de comprar `qty` unidades de uma vez (soma da série geométrica). */
@@ -197,6 +197,7 @@ export function addMoney(amount, isClick = false) {
 
     gameState.money = Math.min(gameState.money + total, MONEY_CAP);
     gameState.totalEarned += total;
+    gameState.runEarned += total;
 
     if (isClick) registerClick(mult);
 }
@@ -205,7 +206,7 @@ function registerClick(mult) {
     gameState.clickCount++;
     const now = Date.now();
 
-    if (now - gameState.lastClickTime < 300) {
+    if (now - gameState.lastClickTime <= COMBO_TIMEOUT_MS) {
         gameState.combo = Math.min(gameState.combo + 1, 999);
         gameState.maxCombo = Math.max(gameState.maxCombo, gameState.combo);
     } else {
@@ -220,6 +221,7 @@ function registerClick(mult) {
         const bonus = Math.max(10, getRawDPS() * mult * 5);
         gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
         gameState.totalEarned += bonus;
+        gameState.runEarned += bonus;
         const fever = (m >= FEVER_COMBO_THRESHOLD && hasRunEffect('fever')) ? ' MODO FEBRE ATIVO!' : '';
         showNotification(`Combo ×${m}! Bônus de ${formatNumber(bonus)}!${fever}`, '🔥', 3000);
         spawnConfetti();
@@ -239,6 +241,7 @@ export function applyOfflineProgress(lastSaveTime) {
 
     gameState.money = Math.min(gameState.money + earnings, MONEY_CAP);
     gameState.totalEarned += earnings;
+    gameState.runEarned += earnings;
     return { earnings, seconds };
 }
 
@@ -248,8 +251,8 @@ export function prestige(onReset) {
     gameState.validate();
 
     const cost = getPrestigeCostForLevel(gameState.prestigeLevel + 1);
-    if (gameState.totalEarned < cost) {
-        showNotification(`Faltam ${formatNumber(cost - gameState.totalEarned)}`, '🌙');
+    if (gameState.runEarned < cost) {
+        showNotification(`Faltam ${formatNumber(cost - gameState.runEarned)}`, '🌙');
         return false;
     }
 
@@ -257,6 +260,7 @@ export function prestige(onReset) {
     gameState.prestigeLevel++;
     gameState.prestigePoints += gained;
     gameState.lifetimePrestigePoints += gained;
+    gameState.runEarned = 0;
     gameState.clickCount = 0;
     gameState.combo = 1;
     gameState.lastComboMilestone = 0;
@@ -306,7 +310,7 @@ export function runAI() {
     for (let i = 0; i < attempts; i++) {
         let bestIdx = -1, bestRoi = 0;
         for (let j = 0; j < upgrades.length; j++) {
-            if (!upgrades[j].manager) continue;
+            if (!upgrades[j].manager || !isBusinessUnlocked(j)) continue;
             const cost = getUpgradeCost(j);
             if (gameState.money < cost) continue;
             const roi = getUpgradeIncome(j) / cost;
@@ -323,8 +327,36 @@ export function runAI() {
 }
 
 // ============ EVENTOS DOURADOS ============
+export function triggerGoldenReward() {
+    if (Math.random() < 0.5) {
+        const duration = getRunEffectValue('goldenDuration', 20000);
+        gameState.tempBoostMult = 3;
+        gameState.tempBoostExpiry = Date.now() + duration;
+        showNotification(`Renda ×3 por ${Math.round(duration / 1000)}s!`, '⚡', 3000);
+    } else {
+        const bonus = Math.max(50, getRawDPS() * getEffectiveMultiplier() * 60);
+        gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
+        gameState.totalEarned += bonus;
+        gameState.runEarned += bonus;
+        showNotification(`Bônus de ${formatNumber(bonus)}!`, '💰', 3000);
+    }
+    spawnConfetti();
+    playSound(2200, 200);
+}
+
+let goldenEventRenderer = null;
+export function setGoldenEventRenderer(renderer) {
+    goldenEventRenderer = renderer;
+}
+
 export function spawnGoldenEvent() {
-    if (document.querySelector('.modal.active')) return;
+    if (goldenEventRenderer) {
+        goldenEventRenderer(triggerGoldenReward);
+        return;
+    }
+
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+    if (document.querySelector('.modal.active') || document.querySelector('.golden-event')) return;
 
     const node = document.createElement('div');
     node.className = 'golden-event';
@@ -341,23 +373,11 @@ export function spawnGoldenEvent() {
     node.style.left = (margin + Math.random() * (maxLeft - margin)) + 'px';
     node.style.top = (minTop + Math.random() * (maxTop - minTop)) + 'px';
 
-    const timeout = setTimeout(() => node.remove(), 8000);
+    const timeout = setTimeout(() => { if (node.parentNode) node.remove(); }, 8000);
     node.addEventListener('click', () => {
         clearTimeout(timeout);
-        node.remove();
-
-        if (Math.random() < 0.5) {
-            const duration = getRunEffectValue('goldenDuration', 20000);
-            gameState.tempBoostMult = 3;
-            gameState.tempBoostExpiry = Date.now() + duration;
-            showNotification(`Renda ×3 por ${Math.round(duration / 1000)}s!`, '⚡', 3000);
-        } else {
-            const bonus = Math.max(50, getRawDPS() * getEffectiveMultiplier() * 60);
-            gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
-            gameState.totalEarned += bonus;
-            showNotification(`Bônus de ${formatNumber(bonus)}!`, '💰', 3000);
-        }
-        spawnConfetti();
-        playSound(2200, 200);
+        if (node.parentNode) node.remove();
+        triggerGoldenReward();
     });
 }
+
