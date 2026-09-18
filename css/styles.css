@@ -117,6 +117,76 @@ main > * { flex-shrink: 0; }
     background: linear-gradient(90deg, rgba(0,212,255,0.4), transparent);
 }
 
+/* ===== CENÁRIO ===== */
+.skyline-panel {
+    position: relative; height: clamp(150px, 22vh, 210px);
+    border-radius: 16px; overflow: hidden;
+    border: 1px solid rgba(0,212,255,0.22);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+#skylineCanvas { display: block; width: 100%; height: 100%; }
+.skyline-caption {
+    position: absolute; left: 0; right: 0; top: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 12px; font-size: 9.5px; letter-spacing: 1px;
+    text-transform: uppercase; pointer-events: none;
+    color: rgba(255,255,255,0.62); text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+#skylineCount { color: var(--secondary); font-weight: 700; }
+
+/* Onda de choque quando algo novo é liberado */
+.shockwave {
+    position: fixed; left: 50%; top: 50%; width: 10px; height: 10px;
+    margin: -5px 0 0 -5px; border-radius: 50%; pointer-events: none; z-index: 190;
+    border: 2px solid var(--secondary);
+    animation: shockwave 900ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes shockwave {
+    0%   { transform: scale(1);  opacity: 0.9; border-width: 3px; }
+    100% { transform: scale(90); opacity: 0;   border-width: 0.4px; }
+}
+
+/* Faixa de anúncio: eventos importantes merecem mais que um toast de canto */
+.banner {
+    position: fixed; left: 50%; top: 18%; transform: translateX(-50%);
+    z-index: 400; pointer-events: none; text-align: center;
+    padding: 14px 30px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(10,16,30,0.96), rgba(12,40,64,0.96));
+    border: 1px solid rgba(0,255,136,0.55);
+    box-shadow: 0 16px 50px rgba(0,0,0,0.6), 0 0 40px rgba(0,255,136,0.22);
+    animation: bannerIn 0.45s cubic-bezier(0.34,1.56,0.64,1), bannerOut 0.4s ease 2.4s forwards;
+}
+.banner-kicker {
+    font-size: 9px; letter-spacing: 2.2px; text-transform: uppercase;
+    color: var(--secondary); margin-bottom: 5px;
+}
+.banner-title {
+    font-family: 'Orbitron', monospace; font-weight: 800;
+    font-size: clamp(15px, 3.4vw, 21px); color: #fff; letter-spacing: -0.2px;
+}
+.banner-sub { font-size: 10.5px; color: var(--text-secondary); margin-top: 4px; }
+.banner.gold { border-color: rgba(255,215,0,0.6); box-shadow: 0 16px 50px rgba(0,0,0,0.6), 0 0 40px rgba(255,215,0,0.25); }
+.banner.gold .banner-kicker { color: var(--gold); }
+@keyframes bannerIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(-18px) scale(0.94); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes bannerOut {
+    to { opacity: 0; transform: translateX(-50%) translateY(-14px) scale(0.97); }
+}
+
+/* Card recém-liberado entra com destaque */
+@keyframes cardReveal {
+    0%   { opacity: 0; transform: translateY(14px) scale(0.9); }
+    55%  { opacity: 1; transform: translateY(-3px) scale(1.04); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.upgrade-btn.revealing {
+    animation: cardReveal 0.65s cubic-bezier(0.34,1.4,0.5,1);
+    border-color: var(--secondary) !important;
+    box-shadow: 0 0 26px rgba(0,255,136,0.55) !important;
+}
+
 .click-section {
     display: flex; flex-direction: column; align-items: center; gap: 14px;
     padding: 22px 16px 18px;

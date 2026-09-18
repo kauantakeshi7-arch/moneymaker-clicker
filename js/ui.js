@@ -8,7 +8,7 @@ import {
     totalOwned, getPrestigeCostForLevel
 } from './config.js';
 import { gameState } from './state.js';
-import { formatNumber, showNotification, playSound } from './utils.js';
+import { formatNumber, showNotification, playSound, showBanner, shockwave } from './utils.js';
 import { spawnConfetti } from './vfx.js';
 import {
     getEffectiveMultiplier, getMultiplierBreakdown, getCritChance, getClickValue,
@@ -26,7 +26,7 @@ export const el = {};
 const CACHED_IDS = ['moneyDisplay','totalEarned','clickCount','comboDisplay','comboValue','multValue',
     'businessCount','prestigeDisplay','mpsDisplay','nextPrestigeCost','timeToPrestige','prestigeBtn',
     'prestigeProgressFill','prestigeProgressLabel','upgradeBadge','prestigePointBadge','chartContainer',
-    'upgradesContainer','achBadge','aiToggle','soundToggle'];
+    'upgradesContainer','achBadge','aiToggle','soundToggle','skylineCount'];
 
 export function cacheDomRefs() {
     for (const id of CACHED_IDS) el[id] = document.getElementById(id);
@@ -122,11 +122,14 @@ export function buyUpgrade(idx, e) {
     setTimeout(() => card.classList.remove('just-bought'), 400);
 
     if (newMult > prevMult) {
-        showNotification(`Marco atingido! ${upgrades[idx].name} rende ×${newMult}!`, '🔥', 3500);
+        showBanner('Marco atingido', `${upgrades[idx].name} ×${newMult}`,
+            `${upgrades[idx].owned} unidades — renda multiplicada`, true);
+        shockwave('#ffd700');
         spawnConfetti();
         playSound(2400, 200);
     } else {
-        showNotification(`${qty}× ${upgrades[idx].name} comprado!`, upgrades[idx].icon);
+        // Compra rotineira não vira aviso: o card atualiza e o prédio sobe no
+        // cenário. Empilhar um toast por clique só virava ruído.
         playSound(1200, 100);
     }
     updateDisplay();
@@ -371,6 +374,22 @@ export function exportSave() {
 
 // ============ RENDER DO FRAME ============
 let badgeThrottle = 0;
+// undefined = primeiro render (não comemora o que já estava liberado no save)
+let wasUnlocked = [];
+
+function announceUnlock(idx, card) {
+    const u = upgrades[idx];
+    card.classList.add('revealing');
+    setTimeout(() => card.classList.remove('revealing'), 700);
+    showBanner('Novo negócio', u.name, `+${formatNumber(u.baseIncome)}/s por unidade`);
+    shockwave();
+    spawnConfetti();
+    playSound(1500, 220);
+}
+
+export function resetUnlockTracking() {
+    wasUnlocked = [];
+}
 
 export function updateDisplay() {
     gameState.validate();
@@ -392,9 +411,10 @@ export function updateDisplay() {
     setText(el.mpsDisplay, '+' + formatNumber(dps) + '/s');
     setText(el.prestigeDisplay, `${gameState.prestigeLevel}`);
 
-    let totalOwned = 0;
-    for (const u of upgrades) totalOwned += u.owned;
-    setText(el.businessCount, totalOwned);
+    let owned = 0;
+    for (const u of upgrades) owned += u.owned;
+    setText(el.businessCount, owned);
+    setText(el.skylineCount, owned === 1 ? '1 construção' : `${owned} construções`);
 
     const comboClass = gameState.combo >= 15 ? 'combo-hot' : gameState.combo >= 5 ? 'combo-mid' : '';
     for (const node of [el.comboDisplay, el.comboValue]) {
@@ -439,8 +459,12 @@ export function updateDisplay() {
         if (!unlocked) {
             refs.card.classList.add('disabled');
             setText(refs.lock, `Compre 5 × ${upgrades[i - 1].name}`);
+            wasUnlocked[i] = false;
             continue;
         }
+        // Liberar um negócio novo é um acontecimento, não uma mudança silenciosa
+        if (wasUnlocked[i] === false) announceUnlock(i, refs.card);
+        wasUnlocked[i] = true;
 
         const qty = Math.max(1, getBuyQuantity(i));
         const cost = getBulkCost(i, qty);

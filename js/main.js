@@ -2,30 +2,47 @@
 
 import { SAVE_KEY } from './config.js';
 import { gameState } from './state.js';
-import { formatNumber, showNotification, playSound, setSoundEnabled } from './utils.js';
+import { formatNumber, showNotification, playSound, setSoundEnabled, showBanner, shockwave } from './utils.js';
 import { initPixiEngine, spawnClickParticle } from './vfx.js';
 import {
     addMoney, getClickValue, getCritChance, getCritMultiplier, getRawDPS,
     getRunEffectValue, prestige, runAI, checkAchievements, spawnGoldenEvent,
-    applyOfflineProgress, setAutomationEnabled
+    applyOfflineProgress, setAutomationEnabled, getEffectiveMultiplier
 } from './economy.js';
 import {
     el, cacheDomRefs, createUpgradeButtons, updateDisplay, setBulkMode,
     openModal, closeModal, toggleChart, initChart, recordChartSample,
-    exportSave, resetGame, buyMoneyUpgrade, buyPrestigeShopItem
+    exportSave, resetGame, buyMoneyUpgrade, buyPrestigeShopItem, resetUnlockTracking
 } from './ui.js';
+import { initSkyline, syncSkyline, drawSkyline, pruneSkyline } from './skyline.js';
 
 // Namespaces só para o console de depuração (ver `exposeDebugApi` no fim).
 import * as config from './config.js';
 import * as economy from './economy.js';
 import * as ui from './ui.js';
 import * as utils from './utils.js';
+import * as skyline from './skyline.js';
 
 // ============ AÇÕES DA INTERFACE ============
 // Um mapa de nome → função, acionado por `data-action` no HTML. Evita
 // onclick inline, que exigiria expor tudo no escopo global.
+/** O prestígio derruba a cidade e reconstrói do zero. */
+function doPrestige() {
+    const before = gameState.prestigeLevel;
+    prestige(() => {
+        createUpgradeButtons();
+        resetUnlockTracking();
+        syncSkyline();
+    });
+    if (gameState.prestigeLevel > before) {
+        shockwave('#ffd700');
+        showBanner('Renascimento', `Prestígio ${gameState.prestigeLevel}`,
+            `Multiplicador ×${getEffectiveMultiplier().toFixed(2)} — a cidade recomeça`, true);
+    }
+}
+
 const ACTIONS = {
-    prestige: () => prestige(createUpgradeButtons),
+    prestige: doPrestige,
     toggleChart,
     openModal: target => openModal(target),
     closeModal: target => closeModal(target),
@@ -74,7 +91,7 @@ window.addEventListener('keydown', (e) => {
         return;
     }
     if (modalOpen) return;
-    if (e.key === 'p' || e.key === 'P') prestige(createUpgradeButtons);
+    if (e.key === 'p' || e.key === 'P') doPrestige();
     if (e.key === 'c' || e.key === 'C') toggleChart();
     if (e.key === 's' || e.key === 'S') openModal('statsModal');
 });
@@ -131,6 +148,7 @@ function init() {
 
     createUpgradeButtons();
     initChart();
+    initSkyline();
     initPixiEngine();
     updateDisplay();
 
@@ -190,6 +208,8 @@ function simulationTick() {
     runAI();
     checkAchievements(showAchievementBadge);
     recordChartSample();
+    syncSkyline();
+    pruneSkyline();
 
     saveAccumulator += deltaMs;
     if (saveAccumulator >= AUTOSAVE_MS) {
@@ -209,8 +229,9 @@ function tickGoldenEvents(deltaMs) {
     }
 }
 
-function renderLoop() {
+function renderLoop(now) {
     updateDisplay();
+    drawSkyline(now || performance.now());
     requestAnimationFrame(renderLoop);
 }
 
@@ -222,7 +243,7 @@ function exposeDebugApi() {
         || location.hostname === '127.0.0.1'
         || location.search.includes('debug');
     if (!isDev) return;
-    window.MM = { state: gameState, config, economy, ui, utils, simulationTick };
+    window.MM = { state: gameState, config, economy, ui, utils, skyline, simulationTick };
     console.info('MoneyMaker: API de depuração em window.MM');
 }
 

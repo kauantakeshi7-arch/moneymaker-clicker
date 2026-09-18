@@ -40,6 +40,27 @@ export function playSound(freq = 800, duration = 100) {
     } catch (e) { /* autoplay bloqueado ou sem AudioContext */ }
 }
 
+/** Faixa central para acontecimentos grandes — um toast de canto não dá conta. */
+export function showBanner(kicker, title, sub = '', gold = false) {
+    const node = document.createElement('div');
+    node.className = 'banner' + (gold ? ' gold' : '');
+    node.innerHTML =
+        `<div class="banner-kicker">${kicker}</div>` +
+        `<div class="banner-title">${title}</div>` +
+        (sub ? `<div class="banner-sub">${sub}</div>` : '');
+    document.body.appendChild(node);
+    setTimeout(() => node.remove(), 2900);
+}
+
+/** Onda de choque a partir do centro da tela. */
+export function shockwave(color) {
+    const node = document.createElement('div');
+    node.className = 'shockwave';
+    if (color) node.style.borderColor = color;
+    document.body.appendChild(node);
+    setTimeout(() => node.remove(), 950);
+}
+
 let toastCount = 0;
 export function showNotification(text, icon = '✨', duration = 2500) {
     const node = document.createElement('div');
