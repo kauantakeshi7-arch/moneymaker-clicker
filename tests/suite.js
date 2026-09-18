@@ -18,6 +18,13 @@ import {
     pendingPrestigePoints, prestige, applyOfflineProgress,
     getUpgradeMilestoneMult, getCritChance, getManagerCost, runAI
 } from '../js/economy.js';
+import {
+    ensureActiveContracts, recordContractProgress, claimContract, hasClaimableContracts
+} from '../js/contracts.js';
+import { getRelevantHeadline } from '../js/news.js';
+import {
+    setSoundVolume, getSoundVolume, setMusicVolume, getMusicVolume
+} from '../js/utils.js';
 
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
@@ -380,6 +387,65 @@ test('marcos de negócios (milestone tiers) escalam multiplicadores corretamente
     assert(getUpgradeMilestoneMult(0) === 2.5, 'em 25 deve ser 2.5x');
     upgrades[0].owned = 50;
     assert(getUpgradeMilestoneMult(0) === 4, 'em 50 deve ser 4x');
+});
+
+test('contratos corporativos: geração automática mantém 3 contratos ativos', () => {
+    reset();
+    gameState.activeContracts = [];
+    ensureActiveContracts();
+    assert(gameState.activeContracts.length === 3, 'deve manter 3 contratos ativos', gameState.activeContracts.length);
+    assert(gameState.activeContracts.every(c => c.id && c.title && c.target > 0), 'cada contrato deve ter id, titulo e meta positiva');
+});
+
+test('contratos corporativos: registro de progresso conclui contrato e permite coleta com recompensa', () => {
+    reset();
+    gameState.activeContracts = [
+        {
+            id: 'test_c1',
+            type: 'clicks',
+            title: 'Teste de Cliques',
+            desc: 'Dê 10 cliques',
+            target: 10,
+            current: 0,
+            rewardType: 'money',
+            rewardText: '+$10.000',
+            rewardValue: 10000,
+            completed: false
+        }
+    ];
+    assert(!hasClaimableContracts(), 'não deve ter contratos prontos inicialmente');
+    recordContractProgress('clicks', 5);
+    assert(!gameState.activeContracts[0].completed, 'com 5/10 ainda não deve estar pronto');
+    recordContractProgress('clicks', 5);
+    assert(gameState.activeContracts[0].completed, 'com 10/10 deve marcar como concluído');
+    assert(hasClaimableContracts(), 'hasClaimableContracts deve retornar true');
+
+    const startCash = gameState.money;
+    const startCount = gameState.completedContractsCount;
+    const ok = claimContract('test_c1');
+    assert(ok, 'claimContract deve retornar true');
+    assert(gameState.money === startCash + 10000, 'recompensa de dinheiro deve ser creditada');
+    assert(gameState.completedContractsCount === startCount + 1, 'contador de contratos concluídos deve subir');
+});
+
+test('noticiário financeiro: manchetes são geradas dinamicamente com textos válidos', () => {
+    const headline = getRelevantHeadline();
+    assert(headline && typeof headline.text === 'string', 'manchete deve ter texto válido');
+    assert(headline.text.length > 10, 'manchete deve ter tamanho suficiente');
+});
+
+test('controles de áudio: sliders de volume respeitam teto [0, 1]', () => {
+    setSoundVolume(0.75);
+    assert(close(getSoundVolume(), 0.75), 'volume de som deve ser 0.75');
+    setSoundVolume(1.5);
+    assert(close(getSoundVolume(), 1.0), 'volume deve ter cap em 1.0');
+    setSoundVolume(-0.2);
+    assert(close(getSoundVolume(), 0.0), 'volume deve ter floor em 0.0');
+
+    setMusicVolume(0.4);
+    assert(close(getMusicVolume(), 0.4), 'volume de música deve ser 0.4');
+    setMusicVolume(2.0);
+    assert(close(getMusicVolume(), 1.0), 'música deve ter cap em 1.0');
 });
 
 /** Roda tudo e devolve o relatório. */

@@ -26,6 +26,8 @@ export class GameState {
         this.runUpgrades = [];       // upgrades comprados com dinheiro (resetam no prestígio)
         this.tempBoostMult = 1;
         this.tempBoostExpiry = 0;
+        this.activeContracts = [];
+        this.completedContractsCount = 0;
     }
 
     validate() {
@@ -44,6 +46,8 @@ export class GameState {
         this.lifetimePrestigePoints = Math.max(0, Math.floor(this.lifetimePrestigePoints || 0));
         if (!this.prestigeShopLevels) this.prestigeShopLevels = defaultPrestigeShopLevels();
         if (!Array.isArray(this.runUpgrades)) this.runUpgrades = [];
+        if (!Array.isArray(this.activeContracts)) this.activeContracts = [];
+        this.completedContractsCount = Math.max(0, Math.floor(this.completedContractsCount || 0));
     }
 
     hasUpgrade(id) {
@@ -68,6 +72,8 @@ export class GameState {
                 lifetimePrestigePoints: Math.floor(this.lifetimePrestigePoints),
                 prestigeShopLevels: this.prestigeShopLevels,
                 runUpgrades: this.runUpgrades.slice(),
+                activeContracts: this.activeContracts.slice(),
+                completedContractsCount: Math.floor(this.completedContractsCount || 0),
                 lastSaveTime: Date.now()
             }));
         } catch (e) { console.error('Save error:', e); }
@@ -105,6 +111,10 @@ export class GameState {
             if (Array.isArray(data.unlockedAchievements)) {
                 this.unlockedAchievements = data.unlockedAchievements.filter(id => typeof id === 'string');
             }
+            if (Array.isArray(data.activeContracts)) {
+                this.activeContracts = data.activeContracts;
+            }
+            this.completedContractsCount = Math.max(0, Math.floor(data.completedContractsCount || 0));
             if (Array.isArray(data.upgrades)) {
                 data.upgrades.forEach((entry, i) => {
                     if (!upgrades[i]) return;

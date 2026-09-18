@@ -156,7 +156,9 @@ export const ACHIEVEMENTS = [
     { id: 'all_types',    icon: '🧩', name: 'Diversificado',      desc: 'Possua ao menos 1 de cada negócio',  check: () => upgrades.every(u => u.owned >= 1) },
     { id: 'prestige_1',   icon: '⭐', name: 'Renascido',          desc: 'Alcance o Prestígio 1',              check: s => s.prestigeLevel >= 1 },
     { id: 'prestige_5',   icon: '🌟', name: 'Meio Caminho',       desc: 'Alcance o Prestígio 5',              check: s => s.prestigeLevel >= 5 },
-    { id: 'prestige_max', icon: '👑', name: 'Lenda',              desc: 'Alcance o Prestígio 10',             check: s => s.prestigeLevel >= 10 }
+    { id: 'prestige_max', icon: '👑', name: 'Lenda',              desc: 'Alcance o Prestígio 10',             check: s => s.prestigeLevel >= 10 },
+    { id: 'contract_1',   icon: '📝', name: 'Primeiro Contrato',  desc: 'Conclua 1 contrato corporativo',     check: s => (s.completedContractsCount || 0) >= 1 },
+    { id: 'contract_10',  icon: '💼', name: 'Executivo de Elite',  desc: 'Conclua 10 contratos corporativos',    check: s => (s.completedContractsCount || 0) >= 10 }
 ];
 
 export function totalOwned() {

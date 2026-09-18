@@ -5,7 +5,8 @@ const CACHED_IDS = ['moneyDisplay','totalEarned','clickCount','comboDisplay','co
     'businessCount','prestigeDisplay','mpsDisplay','nextPrestigeCost','timeToPrestige','prestigeBtn',
     'prestigeProgressFill','prestigeProgressLabel','upgradeBadge','prestigePointBadge','chartContainer',
     'upgradesContainer','achBadge','aiToggle','soundToggle','hapticsToggle','notationToggle','musicToggle',
-    'skylineCount','importInput','clickButton','offlineTime','offlineEarnings','boostBanner','boostText','boostTimer','boostFill'];
+    'skylineCount','importInput','clickButton','offlineTime','offlineEarnings','boostBanner','boostText','boostTimer','boostFill',
+    'contractBadge','contractsContainer','contractsCountDisplay','newsTicker','newsTickerText','soundVolumeSlider','musicVolumeSlider'];
 
 export function cacheDomRefs() {
     for (const id of CACHED_IDS) el[id] = document.getElementById(id);

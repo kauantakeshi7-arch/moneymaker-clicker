@@ -30,6 +30,12 @@ export function formatNumber(n) {
 let soundEnabled = true;
 export function setSoundEnabled(value) { soundEnabled = !!value; }
 
+let soundVolume = 0.8;
+export function setSoundVolume(value) {
+    soundVolume = Math.max(0, Math.min(1, Number(value) || 0));
+}
+export function getSoundVolume() { return soundVolume; }
+
 let hapticsEnabled = true;
 export function setHapticsEnabled(value) { hapticsEnabled = !!value; }
 
@@ -62,8 +68,9 @@ export function playSound(freq = 800, duration = 100) {
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.frequency.value = Math.max(50, Math.min(10000, freq));
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration / 1000);
+        const amp = 0.1 * soundVolume;
+        gain.gain.setValueAtTime(amp, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, amp * 0.1), ctx.currentTime + duration / 1000);
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + duration / 1000);
     } catch (e) { /* autoplay bloqueado ou sem AudioContext */ }
@@ -92,8 +99,9 @@ export function playCashSound() {
             gain.connect(ctx.destination);
             osc.frequency.value = f;
             const start = ctx.currentTime + idx * 0.04;
-            gain.gain.setValueAtTime(0.08, start);
-            gain.gain.exponentialRampToValueAtTime(0.005, start + 0.12);
+            const amp = 0.08 * soundVolume;
+            gain.gain.setValueAtTime(amp, start);
+            gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, amp * 0.05), start + 0.12);
             osc.start(start);
             osc.stop(start + 0.12);
         });
@@ -118,8 +126,9 @@ export function playCritSound() {
             osc.type = 'triangle';
             osc.frequency.value = f;
             const start = ctx.currentTime + idx * 0.05;
-            gain.gain.setValueAtTime(0.12, start);
-            gain.gain.exponentialRampToValueAtTime(0.005, start + 0.15);
+            const amp = 0.12 * soundVolume;
+            gain.gain.setValueAtTime(amp, start);
+            gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, amp * 0.04), start + 0.15);
             osc.start(start);
             osc.stop(start + 0.15);
         });
@@ -144,8 +153,9 @@ export function playPrestigeSound() {
             osc.type = 'sine';
             osc.frequency.value = f;
             const start = ctx.currentTime + idx * 0.07;
-            gain.gain.setValueAtTime(0.14, start);
-            gain.gain.exponentialRampToValueAtTime(0.005, start + 0.35);
+            const amp = 0.14 * soundVolume;
+            gain.gain.setValueAtTime(amp, start);
+            gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, amp * 0.03), start + 0.35);
             osc.start(start);
             osc.stop(start + 0.35);
         });
@@ -153,8 +163,38 @@ export function playPrestigeSound() {
     } catch (e) { playSound(2000, 200); }
 }
 
+/** Som sutil e futurista de passar o cursor em botões */
+export function playHoverSound() {
+    if (!soundEnabled || soundVolume <= 0 || typeof window === 'undefined') return;
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 1400;
+        const amp = 0.015 * soundVolume;
+        gain.gain.setValueAtTime(amp, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.03);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.03);
+    } catch (e) {}
+}
+
 // ============ MÚSICA AMBIENTE PROCEDURAL (Sintetizador Web Audio) ============
 let musicEnabled = false;
+let musicVolume = 0.5;
+export function setMusicVolume(value) {
+    musicVolume = Math.max(0, Math.min(1, Number(value) || 0));
+    if (musicGain && audioCtx) {
+        try {
+            musicGain.gain.setValueAtTime(0.045 * musicVolume, audioCtx.currentTime);
+        } catch (e) {}
+    }
+}
+export function getMusicVolume() { return musicVolume; }
+
 let musicGain = null;
 let musicTimer = null;
 let currentChordIdx = 0;
@@ -183,8 +223,10 @@ export function startAmbientMusic() {
 
     if (!musicGain) {
         musicGain = ctx.createGain();
-        musicGain.gain.setValueAtTime(0.045, ctx.currentTime);
+        musicGain.gain.setValueAtTime(0.045 * musicVolume, ctx.currentTime);
         musicGain.connect(ctx.destination);
+    } else {
+        musicGain.gain.setValueAtTime(0.045 * musicVolume, ctx.currentTime);
     }
 
     if (musicTimer) clearInterval(musicTimer);

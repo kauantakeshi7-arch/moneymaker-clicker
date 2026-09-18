@@ -14,6 +14,7 @@ import {
 import { createUpgradeButtons } from './businesses.js';
 import { resetUnlockTracking } from './hud.js';
 import { syncSkyline } from '../skyline.js';
+import { updateContractsUI } from '../contracts.js';
 
 export function updateEconomy() {
     const container = document.getElementById('economyContainer');
@@ -58,6 +59,7 @@ export function updateStats() {
         { label: 'Pontos 💎', value: gameState.prestigePoints },
         { label: 'Upgrades da Run', value: gameState.runUpgrades.length + '/' + MONEY_UPGRADES.length },
         { label: 'Negócios', value: totalOwned() },
+        { label: 'Contratos Cumpridos', value: gameState.completedContractsCount || 0 },
         { label: 'Tempo', value: timePlayed + 'm' }
     ];
 
@@ -73,10 +75,11 @@ export function updateStats() {
             <div class="stat-value">${s.value}</div>
         </div>
     `).join('') + (breakdownRows ? `
-        <div class="stat-box" style="grid-column: 1 / -1;">
-            <div class="stat-label">Composição do multiplicador</div>
-            <div style="font-size: 10px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">${breakdownRows}</div>
-        </div>` : '');
+        <div style="margin-top: 10px; padding: 10px; background: rgba(0,212,255,0.05); border: 1px solid var(--primary); border-radius: 6px; font-size: 10px;">
+            <div style="font-weight: bold; margin-bottom: 6px; color: var(--text-primary);">Decomposição do Multiplicador:</div>
+            ${breakdownRows}
+        </div>
+    ` : '');
 }
 
 export function openModal(id) {
@@ -86,6 +89,7 @@ export function openModal(id) {
     if (id === 'achievementsModal') updateAchievements();
     if (id === 'prestigeShopModal') updatePrestigeShop();
     if (id === 'upgradeShopModal') updateUpgradeShop();
+    if (id === 'contractsModal') updateContractsUI();
 }
 
 export function updateAchievements() {

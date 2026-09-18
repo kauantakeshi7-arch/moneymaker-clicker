@@ -243,3 +243,61 @@ function spawnConfettiDOM() {
         }, 3500);
     }
 }
+
+export function spawnMoneyRain(count = 28) {
+    if (typeof document === 'undefined') return;
+    if (!pixiApp) return spawnMoneyRainDOM(count);
+
+    const symbols = ['💵', '💸', '🪙', '💎'];
+    const total = isSmallScreen() ? Math.min(count, 16) : count;
+
+    for (let i = 0; i < total; i++) {
+        const char = symbols[Math.floor(Math.random() * symbols.length)];
+        const txt = new PIXI.Text({
+            text: char,
+            style: { fontFamily: 'sans-serif', fontSize: 16 + Math.random() * 14 }
+        });
+        txt.x = Math.random() * pixiApp.screen.width;
+        txt.y = -30 - Math.random() * 120;
+        txt.rotation = (Math.random() - 0.5) * 0.5;
+        pixiApp.stage.addChild(txt);
+
+        const vy = 2.4 + Math.random() * 3.2;
+        const rotSpeed = (Math.random() - 0.5) * 0.05;
+        const swayAmp = 20 + Math.random() * 35;
+        const swayFreq = 0.003 + Math.random() * 0.003;
+        const baseX = txt.x;
+        const phase = Math.random() * Math.PI * 2;
+        let elapsed = 0;
+
+        const tick = () => {
+            elapsed += pixiApp.ticker.deltaMS;
+            txt.y += vy;
+            txt.x = baseX + Math.sin(elapsed * swayFreq + phase) * swayAmp;
+            txt.rotation += rotSpeed;
+            if (txt.y > pixiApp.screen.height + 40) {
+                pixiApp.stage.removeChild(txt);
+                txt.destroy();
+                pixiApp.ticker.remove(tick);
+            }
+        };
+        pixiApp.ticker.add(tick);
+    }
+}
+
+function spawnMoneyRainDOM(count = 20) {
+    if (typeof document === 'undefined') return;
+    const symbols = ['💵', '💸', '🪙', '💎'];
+    const total = isSmallScreen() ? 12 : count;
+    for (let i = 0; i < total; i++) {
+        const el = document.createElement('div');
+        el.className = 'money-rain-piece';
+        el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        el.style.left = Math.random() * 96 + 'vw';
+        el.style.animationDuration = (2.2 + Math.random() * 1.5) + 's';
+        el.style.animationDelay = (Math.random() * 0.4) + 's';
+        el.style.fontSize = (16 + Math.random() * 14) + 'px';
+        document.body.appendChild(el);
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 4000);
+    }
+}

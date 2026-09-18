@@ -4,10 +4,11 @@ import { SAVE_KEY, COMBO_TIMEOUT_MS } from './config.js';
 import { gameState } from './state.js';
 import {
     formatNumber, showNotification, playSound, setSoundEnabled, showBanner, shockwave,
-    playClickSound, playCashSound, playCritSound, playPrestigeSound,
-    setNotationMode, setHapticsEnabled, setMusicEnabled
+    playClickSound, playCashSound, playCritSound, playPrestigeSound, playHoverSound,
+    setNotationMode, setHapticsEnabled, setMusicEnabled,
+    setSoundVolume, setMusicVolume, getSoundVolume, getMusicVolume
 } from './utils.js';
-import { initPixiEngine, spawnClickParticle, spawnConfetti } from './vfx.js';
+import { initPixiEngine, spawnClickParticle, spawnConfetti, spawnMoneyRain } from './vfx.js';
 import {
     addMoney, getClickValue, getCritChance, getCritMultiplier, getRawDPS,
     getRunEffectValue, prestige, runAI, checkAchievements, spawnGoldenEvent,
@@ -23,6 +24,8 @@ import {
     copySaveToClipboard, importSaveFromText, showOfflineModal
 } from './ui/modals.js';
 import { initSkyline, syncSkyline, drawSkyline, pruneSkyline } from './skyline.js';
+import { ensureActiveContracts, recordContractProgress, updateContractBadge } from './contracts.js';
+import { initNewsTicker } from './news.js';
 
 // Namespaces só para o console de depuração (ver `exposeDebugApi` no fim).
 import * as config from './config.js';
@@ -47,6 +50,7 @@ function doPrestige() {
     if (gameState.prestigeLevel > before) {
         playPrestigeSound();
         shockwave('#ffd700');
+        spawnMoneyRain(35);
         showBanner('Renascimento', `Prestígio ${gameState.prestigeLevel}`,
             `Multiplicador ×${getEffectiveMultiplier().toFixed(2)} — a cidade recomeça`, true);
     }
@@ -93,6 +97,8 @@ function handleMainClick(e) {
     addMoney(isCrit ? base * getCritMultiplier() : base, true);
 
     spawnClickParticle(gameState.money - before, e.clientX, e.clientY - 20, isCrit);
+    recordContractProgress('clicks', 1);
+    recordContractProgress('combo', gameState.combo);
     if (isCrit) {
         playCritSound();
     } else {
@@ -209,6 +215,36 @@ function init() {
     el.clickButton.addEventListener('click', handleMainClick);
     el.importInput.addEventListener('change', handleSaveImport);
 
+    const soundVol = localStorage.getItem('soundVolume') !== null ? Number(localStorage.getItem('soundVolume')) : 0.8;
+    const musicVol = localStorage.getItem('musicVolume') !== null ? Number(localStorage.getItem('musicVolume')) : 0.5;
+    setSoundVolume(soundVol);
+    setMusicVolume(musicVol);
+
+    if (el.soundVolumeSlider) {
+        el.soundVolumeSlider.value = soundVol;
+        el.soundVolumeSlider.addEventListener('input', (e) => {
+            const v = Number(e.target.value);
+            setSoundVolume(v);
+            localStorage.setItem('soundVolume', v);
+        });
+    }
+    if (el.musicVolumeSlider) {
+        el.musicVolumeSlider.value = musicVol;
+        el.musicVolumeSlider.addEventListener('input', (e) => {
+            const v = Number(e.target.value);
+            setMusicVolume(v);
+            localStorage.setItem('musicVolume', v);
+        });
+    }
+
+    ensureActiveContracts();
+    updateContractBadge();
+    initNewsTicker();
+
+    document.querySelectorAll('.tool-btn, .icon-btn, .brand-chip, .bulk-btn').forEach(b => {
+        b.addEventListener('mouseenter', () => playHoverSound());
+    });
+
     createUpgradeButtons();
     initChart();
     initSkyline();
@@ -252,14 +288,15 @@ const SIM_INTERVAL_MS = 100;
 const MAX_CATCHUP_MS = 3600000;   // sanidade contra o relógio do sistema pulando
 const AUTOSAVE_MS = 1000;
 
-let lastTickTime = Date.now();
-let saveAccumulator = 0;
+let lastTickTime = performance.now();
 let chartSampleTimer = 0;
 let goldenEventTimer = 0;
-let nextGoldenEventAt = 40000 + Math.random() * 40000;
+let nextGoldenEventAt = 30000 + Math.random() * 30000;
+let saveAccumulator = 0;
+let wasFever = false;
 
-function simulationTick() {
-    const now = Date.now();
+export function simulationTick() {
+    const now = performance.now();
     let deltaMs = now - lastTickTime;
     lastTickTime = now;
     if (!Number.isFinite(deltaMs) || deltaMs < 0) deltaMs = 0;
@@ -275,6 +312,13 @@ function simulationTick() {
     const rawDps = getRawDPS();
     const effectiveMult = getEffectiveMultiplier();
     if (rawDps > 0 && Number.isFinite(rawDps)) addMoney(rawDps * (deltaMs / 1000));
+
+    const feverNow = isFeverActive();
+    if (feverNow && !wasFever) {
+        spawnMoneyRain(30);
+        showBanner('MODO FEBRE ATIVADO!', 'Toda a Renda Duplicada!', 'Mantenha o combo acima de 50', true);
+    }
+    wasFever = feverNow;
 
     tickGoldenEvents(deltaMs);
     runAI();

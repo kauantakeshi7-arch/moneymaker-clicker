@@ -888,3 +888,168 @@ main > * { flex-shrink: 0; }
 @keyframes confettiFall {
     to { transform: translateY(110vh) rotate(540deg); opacity: 0.2; }
 }
+
+/* ===== LETREIRO DE NOTÍCIAS FINANCEIRAS (CYBER NEWS TICKER) ===== */
+.news-ticker {
+    width: 100%; display: flex; align-items: center; gap: 8px;
+    padding: 5px 12px; font-size: 8.5px;
+    background: linear-gradient(90deg, rgba(12, 16, 32, 0.96), rgba(15, 52, 96, 0.85), rgba(12, 16, 32, 0.96));
+    border-top: 1px solid rgba(0, 212, 255, 0.15);
+    border-bottom: 1px solid rgba(0, 212, 255, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    cursor: pointer; user-select: none;
+    transition: all 0.2s ease;
+}
+.news-ticker:hover {
+    background: linear-gradient(90deg, rgba(15, 25, 50, 0.96), rgba(0, 212, 255, 0.15), rgba(15, 25, 50, 0.96));
+    border-bottom-color: var(--primary);
+}
+.news-ticker.news-bonus-alert {
+    background: linear-gradient(90deg, rgba(40, 25, 5, 0.95), rgba(255, 215, 0, 0.18), rgba(40, 25, 5, 0.95));
+    border-bottom-color: var(--gold);
+    animation: newsGlow 1.2s ease-in-out infinite alternate;
+}
+@keyframes newsGlow {
+    from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+    to   { box-shadow: 0 0 22px rgba(255, 215, 0, 0.5); }
+}
+.news-ticker-tag {
+    font-family: 'Orbitron', monospace; font-size: 8px; font-weight: 800;
+    color: #ff4466; background: rgba(255, 68, 102, 0.12);
+    border: 1px solid rgba(255, 68, 102, 0.35); border-radius: 4px;
+    padding: 2px 5px; letter-spacing: 0.5px; white-space: nowrap;
+    animation: livePulse 2s ease-in-out infinite;
+}
+@keyframes livePulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; filter: drop-shadow(0 0 4px #ff4466); } }
+.news-ticker-track {
+    flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+#newsTickerText {
+    display: inline-block; color: #b0c4de; font-weight: 600;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* ===== CONTRATOS CORPORATIVOS ===== */
+.contracts-header-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 10px; margin-bottom: 8px;
+    background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 6px; font-size: 10px; font-weight: 700;
+}
+.contracts-list {
+    display: flex; flex-direction: column; gap: 8px; max-height: 60vh; overflow-y: auto; padding: 2px;
+}
+.contract-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(0, 212, 255, 0.04));
+    border: 1px solid rgba(0, 212, 255, 0.22); border-radius: 8px;
+    padding: 10px 12px; position: relative;
+    transition: all 0.2s ease;
+}
+.contract-card:hover {
+    border-color: rgba(0, 212, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
+}
+.contract-card.contract-ready {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.06), rgba(0, 255, 136, 0.04));
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.25);
+    animation: contractReadyPulse 2s ease-in-out infinite alternate;
+}
+@keyframes contractReadyPulse {
+    from { border-color: rgba(255, 215, 0, 0.4); }
+    to   { border-color: rgba(255, 215, 0, 0.9); }
+}
+.contract-header {
+    display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px;
+}
+.contract-icon-box {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+}
+.contract-info { flex: 1; }
+.contract-title { font-size: 11px; font-weight: 800; color: #ffffff; letter-spacing: 0.3px; }
+.contract-desc { font-size: 9.5px; color: var(--text-secondary); margin-top: 1px; }
+
+.contract-progress-wrap { margin-bottom: 8px; }
+.contract-progress-bar {
+    width: 100%; height: 6px; border-radius: 3px;
+    background: rgba(0, 0, 0, 0.45); overflow: hidden;
+}
+.contract-progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 3px; transition: width 0.2s ease;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+.contract-card.contract-ready .contract-progress-fill {
+    background: linear-gradient(90deg, #ffaa00, #ffd700);
+    box-shadow: 0 0 8px #ffd700;
+}
+.contract-progress-label {
+    font-size: 8px; font-weight: 700; color: var(--text-secondary);
+    text-align: right; margin-top: 2px; font-family: 'Orbitron', monospace;
+}
+
+.contract-footer {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.contract-reward { font-size: 9px; }
+.reward-tag { color: var(--text-secondary); font-weight: 600; margin-right: 4px; }
+.reward-val { color: var(--gold); font-weight: 800; font-family: 'Orbitron', monospace; }
+
+.contract-claim-btn {
+    font-family: inherit; font-size: 9.5px; font-weight: 800;
+    padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    border: 1px solid transparent; transition: all 0.15s ease;
+}
+.contract-claim-btn.disabled {
+    background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary); cursor: not-allowed; opacity: 0.6;
+}
+.contract-claim-btn.active {
+    background: linear-gradient(135deg, #ffaa00, #ffd700);
+    color: #0c1020; border-color: #ffe066;
+    box-shadow: 0 0 14px rgba(255, 215, 0, 0.6);
+    cursor: pointer; transform: scale(1.02);
+}
+.contract-claim-btn.active:hover {
+    transform: scale(1.06); box-shadow: 0 0 22px rgba(255, 215, 0, 0.85);
+}
+
+/* ===== CONTROLES DESLIZANTES DE VOLUME ===== */
+.setting-slider-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-top: 5px;
+}
+.setting-slider-label { font-size: 10px; font-weight: 600; min-width: 95px; }
+.cyber-slider {
+    flex: 1; height: 5px; appearance: none; -webkit-appearance: none;
+    background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 3px; outline: none; cursor: pointer;
+}
+.cyber-slider::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--primary); box-shadow: 0 0 8px var(--primary);
+    cursor: pointer; border: 1.5px solid #ffffff;
+}
+.cyber-slider::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--primary); box-shadow: 0 0 8px var(--primary);
+    cursor: pointer; border: 1.5px solid #ffffff;
+}
+
+/* ===== CHUVA DE DINHEIRO (MAKE IT RAIN) ===== */
+.money-rain-piece {
+    position: fixed; top: -40px; z-index: 155;
+    pointer-events: none;
+    animation: moneyRainFall linear forwards;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+}
+@keyframes moneyRainFall {
+    0% { transform: translateY(0) rotate(0deg) scale(0.85); opacity: 0; }
+    10% { opacity: 0.95; }
+    90% { opacity: 0.95; }
+    100% { transform: translateY(105vh) rotate(360deg) scale(1.1); opacity: 0; }
+}

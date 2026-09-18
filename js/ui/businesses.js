@@ -2,12 +2,13 @@
 
 import { upgrades } from '../config.js';
 import { gameState } from '../state.js';
-import { formatNumber, playSound, playCashSound, showBanner, shockwave, showNotification } from '../utils.js';
+import { formatNumber, playSound, playCashSound, playHoverSound, showBanner, shockwave, showNotification } from '../utils.js';
 import { spawnConfetti } from '../vfx.js';
 import {
     getUpgradeCost, getUpgradeIncome, getUpgradeMilestoneMult,
     getBulkCost, getMaxAffordable, getManagerCost, isBusinessUnlocked
 } from '../economy.js';
+import { recordContractProgress } from '../contracts.js';
 import { el, setText, setHtml } from './dom.js';
 
 // Modo de compra atual. Exportado como binding vivo: o hud lê o valor
@@ -61,6 +62,7 @@ export function createUpgradeButtons() {
             if (e.target.closest('.manager-btn')) return;
             buyUpgrade(i, e);
         });
+        card.addEventListener('mouseenter', () => playHoverSound());
         card.addEventListener('keydown', (e) => {
             if (e.key === ' ' || e.key === 'Enter') {
                 if (e.target.closest('.manager-btn')) return;
@@ -102,6 +104,7 @@ export function buyUpgrade(idx, e) {
     gameState.money -= cost;
     const prevMult = getUpgradeMilestoneMult(idx);
     upgrades[idx].owned += qty;
+    recordContractProgress('buy', qty, { idx });
     const newMult = getUpgradeMilestoneMult(idx);
 
     if (card) {
