@@ -186,37 +186,3 @@ const ACHIEVEMENTS = [
     { id: 'prestige_max', icon: '👑', name: 'Lenda', desc: 'Alcance o Prestígio 10', check: (s) => s.prestigeLevel >= 10 }
 ];
 
-function checkAchievements() {
-    let unlockedNew = false;
-    ACHIEVEMENTS.forEach(a => {
-        if (!gameState.unlockedAchievements.includes(a.id) && a.check(gameState)) {
-            gameState.unlockedAchievements.push(a.id);
-            showNotification(`${a.name} desbloqueada!`, '🏆');
-            unlockedNew = true;
-        }
-    });
-    if (unlockedNew) {
-        const badge = document.getElementById('achBadge');
-        badge.style.display = 'flex';
-        badge.textContent = gameState.unlockedAchievements.length;
-        gameState.save();
-    }
-}
-
-function updateAchievements() {
-    document.getElementById('achCount').textContent = gameState.unlockedAchievements.length;
-    document.getElementById('achTotal').textContent = ACHIEVEMENTS.length;
-    const container = document.getElementById('achievementsContainer');
-    container.innerHTML = ACHIEVEMENTS.map(a => {
-        const unlocked = gameState.unlockedAchievements.includes(a.id);
-        return `
-            <div class="achievement-item ${unlocked ? '' : 'locked'}">
-                <div class="ach-icon">${a.icon}</div>
-                <div>
-                    <div class="ach-name">${a.name}</div>
-                    <div class="ach-desc">${a.desc}</div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}

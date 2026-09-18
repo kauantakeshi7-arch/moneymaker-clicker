@@ -18,7 +18,7 @@ function formatNumber(n) {
 }
 
 function playSound(freq = 800, duration = 100) {
-    if (!document.getElementById('soundToggle').checked) return;
+    if (!el.soundToggle || !el.soundToggle.checked) return;
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();

@@ -206,8 +206,24 @@ function prestige() {
     playSound(2000, 200);
 }
 
+function checkAchievements() {
+    let unlockedNew = false;
+    for (const a of ACHIEVEMENTS) {
+        if (!gameState.unlockedAchievements.includes(a.id) && a.check(gameState)) {
+            gameState.unlockedAchievements.push(a.id);
+            showNotification(`${a.name} desbloqueada!`, '🏆');
+            unlockedNew = true;
+        }
+    }
+    if (unlockedNew) {
+        el.achBadge.style.display = 'flex';
+        el.achBadge.textContent = gameState.unlockedAchievements.length;
+        gameState.save();
+    }
+}
+
 function runAI() {
-    if (!document.getElementById('aiToggle').checked) return;
+    if (!el.aiToggle.checked) return;
 
     const attempts = 3 * getRunEffectValue('aiSpeed', 1);
 
@@ -238,162 +254,3 @@ function runAI() {
     }
 }
 
-function updateDisplay() {
-    gameState.validate();
-
-    if (gameState.combo > 1 && Date.now() - gameState.lastClickTime > 1000) {
-        gameState.combo = 1;
-    }
-
-    const mult = gameState.getEffectiveMultiplier();
-    
-    document.getElementById('moneyDisplay').textContent = formatNumber(gameState.money);
-    document.getElementById('totalEarned').textContent = formatNumber(gameState.totalEarned);
-    document.getElementById('clickCount').textContent = gameState.clickCount;
-    document.getElementById('comboDisplay').textContent = gameState.combo;
-    document.getElementById('comboValue').textContent = `×${Math.floor(gameState.combo)}`;
-    const comboClass = gameState.combo >= 15 ? 'combo-hot' : gameState.combo >= 5 ? 'combo-mid' : '';
-    ['comboDisplay', 'comboValue'].forEach(id => {
-        const el = document.getElementById(id);
-        el.classList.remove('combo-mid', 'combo-hot');
-        if (comboClass) el.classList.add(comboClass);
-    });
-    document.getElementById('multValue').textContent = mult.toFixed(2) + 'x';
-    document.getElementById('businessCount').textContent = upgrades.reduce((a, b) => a + b.owned, 0);
-    document.getElementById('prestigeDisplay').textContent = `${gameState.prestigeLevel}`;
-
-    const rawDps = getRawDPS();
-    let dps = rawDps * mult;
-    document.getElementById('mpsDisplay').textContent = '+' + formatNumber(dps) + '/s';
-
-    const progressFill = document.getElementById('prestigeProgressFill');
-    const progressLabel = document.getElementById('prestigeProgressLabel');
-    const nextCost = getPrestigeCostForLevel(gameState.prestigeLevel + 1);
-    document.getElementById('nextPrestigeCost').textContent = formatNumber(nextCost);
-    const pct = Math.min(100, (gameState.totalEarned / nextCost) * 100);
-    progressFill.style.width = pct.toFixed(1) + '%';
-    const pending = pendingPrestigePoints();
-    progressLabel.innerHTML = `${formatNumber(gameState.totalEarned)} / ${formatNumber(nextCost)} (${pct.toFixed(1)}%)` +
-        ` — prestigiar agora rende <span style="color: var(--gold); font-weight: bold;">${pending} 💎</span>`;
-
-    if (dps > 0) {
-        const remaining = Math.max(0, nextCost - gameState.totalEarned);
-        const seconds = remaining / dps;
-        let timeStr = '∞';
-        if (seconds < 3600) timeStr = Math.ceil(seconds / 60) + 'm';
-        else if (seconds < 86400) timeStr = Math.ceil(seconds / 3600) + 'h';
-        else timeStr = Math.ceil(seconds / 86400) + 'd';
-        document.getElementById('timeToPrestige').textContent = timeStr;
-    }
-
-    const btn = document.getElementById('prestigeBtn');
-    const canPrestige = gameState.totalEarned >= nextCost;
-    btn.textContent = canPrestige ? '⭐' : '🌙';
-    btn.disabled = !canPrestige;
-    btn.classList.toggle('ready', canPrestige);
-
-    const bestIdx = getBestBuyIndex();
-    upgrades.forEach((u, i) => {
-        const card = document.getElementById(`upgrade-${i}`);
-        if (!card) return;
-
-        const unlocked = isBusinessUnlocked(i);
-        card.classList.toggle('locked-biz', !unlocked);
-        if (!unlocked) {
-            card.classList.add('disabled');
-            const lockEl = card.querySelector('.upgrade-lock');
-            if (lockEl) lockEl.textContent = `Compre 5 × ${upgrades[i - 1].name}`;
-            return;
-        }
-
-        const qty = Math.max(1, getBuyQuantity(i));
-        const cost = getBulkCost(i, qty);
-        card.classList.toggle('disabled', gameState.money < cost);
-        card.classList.toggle('best-buy', i === bestIdx);
-
-        const qtyEl = card.querySelector('.upgrade-qty');
-        if (qtyEl) qtyEl.textContent = bulkMode === 'max' ? `×${qty}` : `×${bulkMode}`;
-
-        const costEl = card.querySelector('.upgrade-cost');
-        if (costEl) costEl.textContent = formatNumber(cost);
-
-        const incomeEl = card.querySelector('.upgrade-income');
-        const totalMult = getUpgradeMilestoneMult(i) * getBusinessUpgradeMult(i);
-        if (incomeEl) incomeEl.textContent = `+${formatNumber(getUpgradeIncome(i))}/s${totalMult > 1 ? ' (×' + (+totalMult.toFixed(1)) + ')' : ''}`;
-
-        let count = card.querySelector('.upgrade-count');
-        if (u.owned > 0) {
-            if (!count) {
-                count = document.createElement('div');
-                count.className = 'upgrade-count';
-                card.appendChild(count);
-            }
-            count.textContent = u.owned;
-        }
-    });
-    updateManagerButtons();
-
-    // Badge da loja de upgrades: quantos estão comprávéis agora
-    const affordableUpgrades = MONEY_UPGRADES.filter(up =>
-        !gameState.hasUpgrade(up.id) && up.req() && gameState.money >= up.cost).length;
-    const upBadge = document.getElementById('upgradeBadge');
-    if (upBadge) {
-        upBadge.style.display = affordableUpgrades > 0 ? 'flex' : 'none';
-        upBadge.textContent = affordableUpgrades;
-    }
-
-    // Badge da loja de prestígio: pontos disponíveis para gastar
-    const ppBadge = document.getElementById('prestigePointBadge');
-    if (ppBadge) {
-        ppBadge.style.display = gameState.prestigePoints > 0 ? 'flex' : 'none';
-        ppBadge.textContent = gameState.prestigePoints;
-    }
-
-    updateChart();
-}
-
-function updateChart() {
-    const val = Math.max(0, Math.floor(gameState.money));
-    chartData.push(Number.isFinite(val) ? val : 0);
-    chartData.shift();
-    
-    if (chart) {
-        chart.data.datasets[0].data = chartData;
-        chart.update('none');
-    }
-}
-
-function initChart() {
-    try {
-        const ctx = document.getElementById('progressChart');
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['-2s', '-1.5s', '-1s', '-0.5s', 'Agora'],
-                datasets: [{
-                    label: 'Dinheiro',
-                    data: chartData,
-                    borderColor: '#00d4ff',
-                    backgroundColor: 'rgba(0,212,255,0.1)',
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                plugins: { legend: { labels: { color: '#ffffff' } } },
-                scales: {
-                    y: { ticks: { color: '#aaaaaa' }, grid: { color: 'rgba(0,212,255,0.1)' } },
-                    x: { ticks: { color: '#aaaaaa' }, grid: { color: 'rgba(0,212,255,0.1)' } }
-                }
-            }
-        });
-    } catch (e) {}
-}
-
-function toggleChart() {
-    document.getElementById('chartContainer').classList.toggle('active');
-}

@@ -4,6 +4,27 @@
 let bulkMode = 1; // 1 | 10 | 25 | 'max'
 let chart = null, chartData = [0, 0, 0, 0, 0];
 
+// Referências de DOM resolvidas uma vez. O loop roda 10×/s: buscar os mesmos
+// ~60 elementos por frame era puro desperdício.
+const el = {};
+const CACHED_IDS = ['moneyDisplay','totalEarned','clickCount','comboDisplay','comboValue','multValue',
+    'businessCount','prestigeDisplay','mpsDisplay','nextPrestigeCost','timeToPrestige','prestigeBtn',
+    'prestigeProgressFill','prestigeProgressLabel','upgradeBadge','prestigePointBadge','chartContainer',
+    'upgradesContainer','achBadge','aiToggle','soundToggle'];
+
+function cacheDomRefs() {
+    for (const id of CACHED_IDS) el[id] = document.getElementById(id);
+}
+
+// Escreve só quando o valor muda: atribuir textContent igual ainda custa recálculo de estilo.
+function setText(node, value) {
+    if (node && node._last !== value) { node.textContent = value; node._last = value; }
+}
+
+function setHtml(node, value) {
+    if (node && node._last !== value) { node.innerHTML = value; node._last = value; }
+}
+
 function setBulkMode(mode) {
     bulkMode = mode;
     document.querySelectorAll('.bulk-btn').forEach(b => {
@@ -12,13 +33,15 @@ function setBulkMode(mode) {
     updateDisplay();
 }
 
+// Referências dos filhos de cada card, guardadas na criação
+let cardRefs = [];
+
 function createUpgradeButtons() {
-    const container = document.getElementById('upgradesContainer');
+    const container = el.upgradesContainer || document.getElementById('upgradesContainer');
     container.innerHTML = '';
+    cardRefs = [];
 
     upgrades.forEach((u, i) => {
-        const cost = getUpgradeCost(i);
-        const income = getUpgradeIncome(i);
         const card = document.createElement('div');
         card.id = `upgrade-${i}`;
         card.className = 'upgrade-btn';
@@ -28,9 +51,10 @@ function createUpgradeButtons() {
             <div class="upgrade-qty"></div>
             <div class="upgrade-icon">${u.icon}</div>
             <div class="upgrade-name">${u.name}</div>
-            <div class="upgrade-cost">${formatNumber(cost)}</div>
-            <div class="upgrade-income">+${formatNumber(income)}/s</div>
-            <button class="manager-btn" id="manager-${i}" title="Gerente automatiza a compra deste negócio"></button>
+            <div class="upgrade-cost">${formatNumber(getUpgradeCost(i))}</div>
+            <div class="upgrade-income">+${formatNumber(getUpgradeIncome(i))}/s</div>
+            <div class="upgrade-count" style="display:none;"></div>
+            <button class="manager-btn" title="Gerente automatiza a compra deste negócio"></button>
             <div class="upgrade-lock-overlay"><div>🔒</div><div class="upgrade-lock"></div></div>
         `;
         card.addEventListener('click', (e) => {
@@ -38,7 +62,18 @@ function createUpgradeButtons() {
             buyUpgrade(i, e);
         });
         container.appendChild(card);
-        document.getElementById(`manager-${i}`).addEventListener('click', (e) => {
+
+        const refs = {
+            card,
+            qty: card.querySelector('.upgrade-qty'),
+            cost: card.querySelector('.upgrade-cost'),
+            income: card.querySelector('.upgrade-income'),
+            count: card.querySelector('.upgrade-count'),
+            lock: card.querySelector('.upgrade-lock'),
+            manager: card.querySelector('.manager-btn')
+        };
+        cardRefs.push(refs);
+        refs.manager.addEventListener('click', (e) => {
             e.stopPropagation();
             buyManager(i);
         });
@@ -86,20 +121,20 @@ function buyManager(idx) {
 }
 
 function updateManagerButtons() {
-    upgrades.forEach((u, i) => {
-        const btn = document.getElementById(`manager-${i}`);
-        if (!btn) return;
-        if (u.manager) {
-            btn.textContent = '🤖 Ativo';
+    for (let i = 0; i < cardRefs.length; i++) {
+        const btn = cardRefs[i].manager;
+        if (!btn) continue;
+        if (upgrades[i].manager) {
+            setText(btn, '🤖 Ativo');
             btn.classList.add('owned');
             btn.disabled = true;
         } else {
             const cost = getManagerCost(i);
-            btn.textContent = `🤖 ${formatNumber(cost)}`;
+            setText(btn, `🤖 ${formatNumber(cost)}`);
             btn.classList.remove('owned');
             btn.disabled = gameState.money < cost;
         }
-    });
+    }
 }
 
 function updateEconomy() {
@@ -174,6 +209,20 @@ function openModal(id) {
     if (id === 'achievementsModal') updateAchievements();
     if (id === 'prestigeShopModal') updatePrestigeShop();
     if (id === 'upgradeShopModal') updateUpgradeShop();
+}
+
+function updateAchievements() {
+    document.getElementById('achCount').textContent = gameState.unlockedAchievements.length;
+    document.getElementById('achTotal').textContent = ACHIEVEMENTS.length;
+    document.getElementById('achievementsContainer').innerHTML = ACHIEVEMENTS.map(a => `
+        <div class="achievement-item ${gameState.unlockedAchievements.includes(a.id) ? '' : 'locked'}">
+            <div class="ach-icon">${a.icon}</div>
+            <div>
+                <div class="ach-name">${a.name}</div>
+                <div class="ach-desc">${a.desc}</div>
+            </div>
+        </div>
+    `).join('');
 }
 
 function updatePrestigeShop() {
@@ -293,6 +342,160 @@ function exportSave() {
         link.download = 'moneymaker_' + Date.now() + '.txt';
         link.click();
     } catch (e) { alert('Erro!'); }
+}
+
+// ============ RENDER DO FRAME ============
+let badgeThrottle = 0;
+
+function updateDisplay() {
+    gameState.validate();
+
+    if (gameState.combo > 1 && Date.now() - gameState.lastClickTime > 1000) {
+        gameState.combo = 1;
+    }
+
+    const mult = gameState.getEffectiveMultiplier();
+    const rawDps = getRawDPS();
+    const dps = rawDps * mult;
+
+    setText(el.moneyDisplay, formatNumber(gameState.money));
+    setText(el.totalEarned, formatNumber(gameState.totalEarned));
+    setText(el.clickCount, gameState.clickCount);
+    setText(el.comboDisplay, gameState.combo);
+    setText(el.comboValue, `×${Math.floor(gameState.combo)}`);
+    setText(el.multValue, mult.toFixed(2) + 'x');
+    setText(el.mpsDisplay, '+' + formatNumber(dps) + '/s');
+    setText(el.prestigeDisplay, `${gameState.prestigeLevel}`);
+
+    let totalOwned = 0;
+    for (const u of upgrades) totalOwned += u.owned;
+    setText(el.businessCount, totalOwned);
+
+    const comboClass = gameState.combo >= 15 ? 'combo-hot' : gameState.combo >= 5 ? 'combo-mid' : '';
+    for (const node of [el.comboDisplay, el.comboValue]) {
+        if (node._comboClass === comboClass) continue;
+        node.classList.remove('combo-mid', 'combo-hot');
+        if (comboClass) node.classList.add(comboClass);
+        node._comboClass = comboClass;
+    }
+
+    const nextCost = getPrestigeCostForLevel(gameState.prestigeLevel + 1);
+    setText(el.nextPrestigeCost, formatNumber(nextCost));
+    const pct = Math.min(100, (gameState.totalEarned / nextCost) * 100);
+    const pctStr = pct.toFixed(1) + '%';
+    if (el.prestigeProgressFill._last !== pctStr) {
+        el.prestigeProgressFill.style.width = pctStr;
+        el.prestigeProgressFill._last = pctStr;
+    }
+    setHtml(el.prestigeProgressLabel,
+        `${formatNumber(gameState.totalEarned)} / ${formatNumber(nextCost)} (${pctStr})` +
+        ` — prestigiar agora rende <span style="color: var(--gold); font-weight: bold;">${pendingPrestigePoints()} 💎</span>`);
+
+    if (dps > 0) {
+        const seconds = Math.max(0, nextCost - gameState.totalEarned) / dps;
+        let timeStr;
+        if (seconds < 3600) timeStr = Math.ceil(seconds / 60) + 'm';
+        else if (seconds < 86400) timeStr = Math.ceil(seconds / 3600) + 'h';
+        else timeStr = Math.ceil(seconds / 86400) + 'd';
+        setText(el.timeToPrestige, timeStr);
+    }
+
+    const canPrestige = gameState.totalEarned >= nextCost;
+    setText(el.prestigeBtn, canPrestige ? '⭐' : '🌙');
+    el.prestigeBtn.disabled = !canPrestige;
+    el.prestigeBtn.classList.toggle('ready', canPrestige);
+
+    const bestIdx = getBestBuyIndex();
+    for (let i = 0; i < cardRefs.length; i++) {
+        const refs = cardRefs[i];
+        const unlocked = isBusinessUnlocked(i);
+        refs.card.classList.toggle('locked-biz', !unlocked);
+
+        if (!unlocked) {
+            refs.card.classList.add('disabled');
+            setText(refs.lock, `Compre 5 × ${upgrades[i - 1].name}`);
+            continue;
+        }
+
+        const qty = Math.max(1, getBuyQuantity(i));
+        const cost = getBulkCost(i, qty);
+        refs.card.classList.toggle('disabled', gameState.money < cost);
+        refs.card.classList.toggle('best-buy', i === bestIdx);
+
+        setText(refs.qty, bulkMode === 'max' ? `×${qty}` : `×${bulkMode}`);
+        setText(refs.cost, formatNumber(cost));
+
+        const totalMult = getUpgradeMilestoneMult(i) * getBusinessUpgradeMult(i);
+        setText(refs.income,
+            `+${formatNumber(getUpgradeIncome(i))}/s${totalMult > 1 ? ' (×' + (+totalMult.toFixed(1)) + ')' : ''}`);
+
+        const owned = upgrades[i].owned;
+        if (owned > 0) {
+            refs.count.style.display = '';
+            setText(refs.count, owned);
+        } else if (refs.count.style.display !== 'none') {
+            refs.count.style.display = 'none';
+        }
+    }
+    updateManagerButtons();
+
+    // Os badges percorrem os 29 upgrades chamando closures de requisito: a cada
+    // 500ms é o bastante, não precisa ser a cada frame.
+    if (--badgeThrottle <= 0) {
+        badgeThrottle = 5;
+        let affordable = 0;
+        for (const up of MONEY_UPGRADES) {
+            if (!gameState.hasUpgrade(up.id) && gameState.money >= up.cost && up.req()) affordable++;
+        }
+        el.upgradeBadge.style.display = affordable > 0 ? 'flex' : 'none';
+        setText(el.upgradeBadge, affordable);
+
+        el.prestigePointBadge.style.display = gameState.prestigePoints > 0 ? 'flex' : 'none';
+        setText(el.prestigePointBadge, gameState.prestigePoints);
+    }
+
+    updateChart();
+}
+
+// ============ GRÁFICO ============
+function updateChart() {
+    // Sem isto o Chart.js redesenhava 10×/s mesmo com o painel fechado:
+    // era o item mais caro do frame inteiro.
+    if (!chart || !el.chartContainer.classList.contains('active')) return;
+
+    const val = Math.max(0, Math.floor(gameState.money));
+    chartData.push(Number.isFinite(val) ? val : 0);
+    chartData.shift();
+    chart.data.datasets[0].data = chartData;
+    chart.update('none');
+}
+
+function initChart() {
+    try {
+        chart = new Chart(document.getElementById('progressChart'), {
+            type: 'line',
+            data: {
+                labels: ['-2s', '-1.5s', '-1s', '-0.5s', 'Agora'],
+                datasets: [{
+                    label: 'Dinheiro', data: chartData,
+                    borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.1)',
+                    tension: 0.4, fill: true, pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                plugins: { legend: { labels: { color: '#ffffff' } } },
+                scales: {
+                    y: { ticks: { color: '#aaaaaa' }, grid: { color: 'rgba(0,212,255,0.1)' } },
+                    x: { ticks: { color: '#aaaaaa' }, grid: { color: 'rgba(0,212,255,0.1)' } }
+                }
+            }
+        });
+    } catch (e) {}
+}
+
+function toggleChart() {
+    el.chartContainer.classList.toggle('active');
 }
 
 function resetGame() {

@@ -54,6 +54,7 @@ document.getElementById('importInput').addEventListener('change', (e) => {
 });
 
 // ============ INICIALIZAÇÃO ============
+cacheDomRefs();
 gameState.load();
 gameState.validate();
 document.getElementById('soundToggle').checked = localStorage.getItem('soundEnabled') !== 'false';
@@ -64,9 +65,8 @@ initChart();
 initPixiEngine();
 updateDisplay();
 if (gameState.unlockedAchievements.length > 0) {
-    const badge = document.getElementById('achBadge');
-    badge.style.display = 'flex';
-    badge.textContent = gameState.unlockedAchievements.length;
+    el.achBadge.style.display = 'flex';
+    el.achBadge.textContent = gameState.unlockedAchievements.length;
 }
 checkAchievements();
 
