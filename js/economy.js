@@ -1,90 +1,128 @@
-// Regras do jogo: custos, renda, compras, prestígio, automação e eventos.
+// Regras do jogo: valores derivados, custos, renda, compras, prestígio,
+// automação e eventos. Tudo aqui é função do estado — o estado em si só
+// guarda dados (state.js) e os números de balanceamento vêm de config.js.
 
-// ============ EVENTOS ALEATÓRIOS ============
-let goldenEventTimer = 0;
-let nextGoldenEventAt = 40000 + Math.random() * 40000;
+import {
+    upgrades, MONEY_CAP, COST_GROWTH, MILESTONE_TIERS, MONEY_UPGRADES_BY_ID,
+    ACHIEVEMENTS, PRESTIGE_SHOP, COMBO_MILESTONES, FEVER_COMBO_THRESHOLD,
+    BUSINESS_UNLOCK_THRESHOLD, BASE_CRIT_CHANCE, BASE_CRIT_MULTIPLIER,
+    BASE_CLICK_PERCENT, MANAGER_COST_FACTOR, OFFLINE_CAP_SECONDS,
+    OFFLINE_BASE_EFFICIENCY, getPrestigeCostForLevel, getPrestigeMultiplierForLevel
+} from './config.js';
+import { gameState } from './state.js';
+import { formatNumber, showNotification, playSound } from './utils.js';
+import { spawnConfetti } from './vfx.js';
 
-function spawnGoldenEvent() {
-    if (document.querySelector('.modal.active')) return;
-    const el = document.createElement('div');
-    el.className = 'golden-event';
-    el.textContent = '💰';
-    document.body.appendChild(el);
-    // offsetWidth e não getBoundingClientRect: a animação de entrada começa em scale(0),
-    // então o rect mediria 0 e o cálculo de limites usaria um tamanho errado.
-    const size = el.offsetWidth || 54;
-    const margin = 12;
-    const maxLeft = Math.max(margin, window.innerWidth - size - margin);
-    const minTop = 90; // abaixo do cabeçalho
-    const maxTop = Math.max(minTop, window.innerHeight - size - margin);
-    el.style.left = (margin + Math.random() * (maxLeft - margin)) + 'px';
-    el.style.top = (minTop + Math.random() * (maxTop - minTop)) + 'px';
-    const timeout = setTimeout(() => el.remove(), 8000);
-    el.addEventListener('click', () => {
-        clearTimeout(timeout);
-        el.remove();
-        const isBuff = Math.random() < 0.5;
-        if (isBuff) {
-            const duration = getRunEffectValue('goldenDuration', 20000);
-            gameState.tempBoostMult = 3;
-            gameState.tempBoostExpiry = Date.now() + duration;
-            showNotification(`Renda ×3 por ${Math.round(duration / 1000)}s!`, '⚡', 3000);
-        } else {
-            const bonus = Math.max(50, getRawDPS() * gameState.getEffectiveMultiplier() * 60);
-            gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
-            gameState.totalEarned += bonus;
-            showNotification(`Bônus de ${formatNumber(bonus)}!`, '💰', 3000);
-        }
-        spawnConfetti();
-        playSound(2200, 200);
-    });
+// ============ EFEITOS DOS UPGRADES DE RUN ============
+// Um acumulador por forma de combinar: produto, soma, presença, último valor.
+
+function runEffects(type) {
+    const out = [];
+    for (const id of gameState.runUpgrades) {
+        const up = MONEY_UPGRADES_BY_ID[id];
+        if (up && up.effect.type === type) out.push(up.effect);
+    }
+    return out;
 }
 
-// ============ LÓGICA DE JOGO (v17) ============
-// Lei de balanceamento: o custo precisa crescer mais rápido que os multiplicadores de renda.
-// Com 1.07 o payback caía para <1s com upgrades ativos (impressora de dinheiro → explosão).
-// Com 1.15 (padrão do gênero) cada tier rende ~20 unidades baratas e então se auto-corrige.
-const COST_GROWTH = 1.15;
+export function getRunUpgradeProduct(type) {
+    let product = 1;
+    for (const e of runEffects(type)) product *= e.value;
+    return product;
+}
 
-function getUpgradeCost(idx) {
-    // leve scaling por unidade (força diversificação entre tiers)
+export function getRunUpgradeSum(type) {
+    let sum = 0;
+    for (const e of runEffects(type)) sum += e.value;
+    return sum;
+}
+
+export function hasRunEffect(type) {
+    return runEffects(type).length > 0;
+}
+
+export function getRunEffectValue(type, fallback) {
+    const found = runEffects(type);
+    return found.length ? found[found.length - 1].value : fallback;
+}
+
+// Sinergias: bônus global derivado de quantos negócios de um tipo você acumulou.
+// O teto (`cap`) é obrigatório — sem ele o bônus cresce junto com a contagem e
+// retroalimenta: mais negócios → mais multiplicador → mais negócios.
+export function getSynergyMultiplier() {
+    let bonus = 0;
+    for (const e of runEffects('synergy')) {
+        const count = upgrades[e.source].owned;
+        bonus += Math.min(Math.floor(count / e.per) * e.value, e.cap);
+    }
+    return 1 + bonus;
+}
+
+export function isFeverActive() {
+    return hasRunEffect('fever') && gameState.combo >= FEVER_COMBO_THRESHOLD;
+}
+
+// ============ MULTIPLICADORES ============
+// Decomposto em fatores nomeados: é a fonte única da verdade e aparece assim
+// na tela de estatísticas, o que torna qualquer desequilíbrio visível.
+export function getMultiplierBreakdown() {
+    return {
+        prestígio: getPrestigeMultiplierForLevel(gameState.prestigeLevel),
+        conquistas: 1 + gameState.unlockedAchievements.length * 0.01,
+        lojaPrestígio: 1 + gameState.prestigeShopLevels.globalIncome * 0.1,
+        upgrades: getRunUpgradeProduct('globalMult'),
+        sinergias: getSynergyMultiplier(),
+        eventoDourado: Date.now() < gameState.tempBoostExpiry ? gameState.tempBoostMult : 1,
+        febre: isFeverActive() ? 2 : 1
+    };
+}
+
+export function getEffectiveMultiplier() {
+    const b = getMultiplierBreakdown();
+    return b.prestígio * b.conquistas * b.lojaPrestígio * b.upgrades * b.sinergias * b.eventoDourado * b.febre;
+}
+
+export function getClickPercent() {
+    return (BASE_CLICK_PERCENT + gameState.prestigeShopLevels.clickPower * 0.05)
+        * getRunUpgradeProduct('clickMult');
+}
+
+export function getCritChance() {
+    const base = BASE_CRIT_CHANCE + gameState.prestigeShopLevels.critChance * 0.02;
+    return Math.min(0.75, base + getRunUpgradeSum('critChanceAdd'));
+}
+
+export function getCritMultiplier() {
+    return BASE_CRIT_MULTIPLIER * getRunUpgradeProduct('critMult');
+}
+
+// ============ NEGÓCIOS ============
+export function getUpgradeCost(idx) {
     const u = upgrades[idx];
     return u.baseCost * Math.pow(COST_GROWTH, u.owned);
 }
 
-// Custo total de comprar `qty` unidades de uma vez (série geométrica)
-function getBulkCost(idx, qty) {
+/** Custo de comprar `qty` unidades de uma vez (soma da série geométrica). */
+export function getBulkCost(idx, qty) {
     if (qty <= 0) return 0;
-    const u = upgrades[idx];
-    const first = u.baseCost * Math.pow(COST_GROWTH, u.owned);
+    const first = getUpgradeCost(idx);
     return first * (Math.pow(COST_GROWTH, qty) - 1) / (COST_GROWTH - 1);
 }
 
-// Quantas unidades o dinheiro atual compra (inverso da série geométrica)
-function getMaxAffordable(idx, budget = gameState.money) {
-    const u = upgrades[idx];
-    const first = u.baseCost * Math.pow(COST_GROWTH, u.owned);
+/** Quantas unidades o orçamento compra (inverso da série geométrica). */
+export function getMaxAffordable(idx, budget = gameState.money) {
+    const first = getUpgradeCost(idx);
     if (budget < first) return 0;
     const n = Math.log(1 + (budget * (COST_GROWTH - 1)) / first) / Math.log(COST_GROWTH);
     return Math.max(0, Math.floor(n + 1e-9));
 }
 
-// Quantidade efetiva para o modo de compra atual (bulkMode: 1, 10, 25 ou 'max')
-function getBuyQuantity(idx) {
-    if (bulkMode === 'max') return getMaxAffordable(idx);
-    return bulkMode;
+export function isBusinessUnlocked(idx) {
+    if (idx === 0 || upgrades[idx].owned > 0) return true;
+    return upgrades[idx - 1].owned >= BUSINESS_UNLOCK_THRESHOLD;
 }
 
-// Desbloqueio progressivo: cada negócio aparece após 5 unidades do anterior
-function isBusinessUnlocked(idx) {
-    if (idx === 0) return true;
-    if (upgrades[idx].owned > 0) return true;
-    return upgrades[idx - 1].owned >= 5;
-}
-
-// marcos fixos e limitados (evita crescimento duplamente exponencial)
-const MILESTONE_TIERS = [[50, 4], [25, 2.5], [10, 2]];
-function getUpgradeMilestoneMult(idx) {
+export function getUpgradeMilestoneMult(idx) {
     const owned = upgrades[idx].owned;
     for (const [threshold, mult] of MILESTONE_TIERS) {
         if (owned >= threshold) return mult;
@@ -92,36 +130,36 @@ function getUpgradeMilestoneMult(idx) {
     return 1;
 }
 
-// Multiplicador daquele negócio: marcos automáticos × upgrades comprados
-function getBusinessUpgradeMult(idx) {
+export function getBusinessUpgradeMult(idx) {
     let mult = 1;
-    for (const id of gameState.runUpgrades) {
-        const up = MONEY_UPGRADES_BY_ID[id];
-        if (up && up.effect.type === 'bizMult' && up.effect.idx === idx) mult *= up.effect.value;
+    for (const e of runEffects('bizMult')) {
+        if (e.idx === idx) mult *= e.value;
     }
     return mult;
 }
 
-function getUpgradeIncome(idx) {
+export function getUpgradeIncome(idx) {
     return upgrades[idx].baseIncome * getUpgradeMilestoneMult(idx) * getBusinessUpgradeMult(idx);
 }
 
-function getRawDPS() {
-    return upgrades.reduce((a, u, i) => a + getUpgradeIncome(i) * u.owned, 0);
+export function getRawDPS() {
+    let dps = 0;
+    for (let i = 0; i < upgrades.length; i++) dps += getUpgradeIncome(i) * upgrades[i].owned;
+    return dps;
 }
 
-// Valor bruto de um clique: % da renda passiva, então nunca fica obsoleto
-function getClickValue() {
-    return Math.max(1, getRawDPS() * gameState.clickPercent);
+/** Clique vale uma fração da renda passiva, então nunca fica obsoleto. */
+export function getClickValue() {
+    return Math.max(1, getRawDPS() * getClickPercent());
 }
 
-function getManagerCost(idx) {
-    const discount = 1 - (gameState.prestigeShopLevels.cheapManagers * 0.1);
-    return upgrades[idx].baseCost * 50 * Math.max(0.5, discount);
+export function getManagerCost(idx) {
+    const discount = 1 - gameState.prestigeShopLevels.cheapManagers * 0.1;
+    return upgrades[idx].baseCost * MANAGER_COST_FACTOR * Math.max(0.5, discount);
 }
 
-// Qual negócio dá mais renda por dólar investido agora (ajuda a decisão do jogador)
-function getBestBuyIndex() {
+/** Negócio com maior renda por dólar investido agora — mostrado com ⭐. */
+export function getBestBuyIndex() {
     let best = -1, bestRoi = 0;
     for (let i = 0; i < upgrades.length; i++) {
         if (!isBusinessUnlocked(i)) continue;
@@ -131,126 +169,195 @@ function getBestBuyIndex() {
     return best;
 }
 
-const COMBO_MILESTONES = [10, 25, 50, 100];
+// ============ PONTOS DE PRESTÍGIO ============
+// Decisão central do gênero: prestigiar agora ou empurrar mais fundo?
+// Escala logarítmica de propósito — a economia de dinheiro é exponencial, então
+// qualquer raiz faria os pontos explodirem junto e zerariam a loja numa run.
+// Cada 1000× de progresso vale +24 pontos.
+export function prestigePointsForTotal(totalEarned) {
+    if (!Number.isFinite(totalEarned) || totalEarned < 1e6) return 0;
+    const raw = 8 * Math.log10(totalEarned / 1e6);
+    const boost = 1 + gameState.prestigeShopLevels.prestigeBoost * 0.05;
+    return Math.max(0, Math.floor(raw * boost));
+}
 
-function addMoney(amount, isClick = false) {
+export function pendingPrestigePoints() {
+    return Math.max(0, prestigePointsForTotal(gameState.totalEarned) - gameState.lifetimePrestigePoints);
+}
+
+// ============ GANHO DE DINHEIRO ============
+export function addMoney(amount, isClick = false) {
     if (!Number.isFinite(amount) || amount <= 0) return;
 
-    const mult = gameState.getEffectiveMultiplier();
-    const comboBonus = isClick ? gameState.combo : 1;
-    // sem Math.floor: arredondar aqui zerava toda renda fracionária do início de jogo
-    const total = amount * mult * comboBonus;
-
+    const mult = getEffectiveMultiplier();
+    // O combo é bônus de clique: aplicá-lo à renda passiva deixava um
+    // auto-clicker multiplicar a economia inteira por até ×999.
+    const total = amount * mult * (isClick ? gameState.combo : 1);
     if (!Number.isFinite(total) || total < 0) return;
 
     gameState.money = Math.min(gameState.money + total, MONEY_CAP);
     gameState.totalEarned += total;
 
-    if (isClick) {
-        gameState.clickCount++;
-        const now = Date.now();
-        if (now - gameState.lastClickTime < 300) {
-            gameState.combo = Math.min(gameState.combo + 1, 999);
-            gameState.maxCombo = Math.max(gameState.maxCombo, gameState.combo);
-        } else {
-            gameState.combo = 1;
-            gameState.lastComboMilestone = 0;
-        }
-        gameState.lastClickTime = now;
+    if (isClick) registerClick(mult);
+}
 
-        COMBO_MILESTONES.forEach(m => {
-            if (gameState.combo === m && gameState.lastComboMilestone < m) {
-                gameState.lastComboMilestone = m;
-                const bonus = Math.max(10, getRawDPS() * mult * 5);
-                gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
-                gameState.totalEarned += bonus;
-                const feverMsg = (m >= FEVER_COMBO_THRESHOLD && hasRunEffect('fever')) ? ' MODO FEBRE ATIVO!' : '';
-                showNotification(`Combo ×${m}! Bônus de ${formatNumber(bonus)}!${feverMsg}`, '🔥', 3000);
-                spawnConfetti();
-            }
-        });
+function registerClick(mult) {
+    gameState.clickCount++;
+    const now = Date.now();
+
+    if (now - gameState.lastClickTime < 300) {
+        gameState.combo = Math.min(gameState.combo + 1, 999);
+        gameState.maxCombo = Math.max(gameState.maxCombo, gameState.combo);
+    } else {
+        gameState.combo = 1;
+        gameState.lastComboMilestone = 0;
+    }
+    gameState.lastClickTime = now;
+
+    for (const m of COMBO_MILESTONES) {
+        if (gameState.combo !== m || gameState.lastComboMilestone >= m) continue;
+        gameState.lastComboMilestone = m;
+        const bonus = Math.max(10, getRawDPS() * mult * 5);
+        gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
+        gameState.totalEarned += bonus;
+        const fever = (m >= FEVER_COMBO_THRESHOLD && hasRunEffect('fever')) ? ' MODO FEBRE ATIVO!' : '';
+        showNotification(`Combo ×${m}! Bônus de ${formatNumber(bonus)}!${fever}`, '🔥', 3000);
+        spawnConfetti();
     }
 }
 
-function prestige() {
+/** Credita o tempo em que o jogo esteve fechado. Devolve o que foi ganho. */
+export function applyOfflineProgress(lastSaveTime) {
+    if (!lastSaveTime) return { earnings: 0, seconds: 0 };
+
+    const seconds = Math.min(OFFLINE_CAP_SECONDS, Math.max(0, (Date.now() - lastSaveTime) / 1000));
+    if (seconds <= 5) return { earnings: 0, seconds: 0 };
+
+    const efficiency = Math.min(1, OFFLINE_BASE_EFFICIENCY + gameState.prestigeShopLevels.offlineEfficiency * 0.1);
+    const earnings = getRawDPS() * getEffectiveMultiplier() * seconds * efficiency;
+    if (earnings <= 0) return { earnings: 0, seconds };
+
+    gameState.money = Math.min(gameState.money + earnings, MONEY_CAP);
+    gameState.totalEarned += earnings;
+    return { earnings, seconds };
+}
+
+// ============ PRESTÍGIO ============
+/** @param {() => void} onReset chamado para a UI reconstruir os cards. */
+export function prestige(onReset) {
     gameState.validate();
 
     const cost = getPrestigeCostForLevel(gameState.prestigeLevel + 1);
-
     if (gameState.totalEarned < cost) {
         showNotification(`Faltam ${formatNumber(cost - gameState.totalEarned)}`, '🌙');
-        return;
+        return false;
     }
 
     const gained = pendingPrestigePoints();
-
     gameState.prestigeLevel++;
     gameState.prestigePoints += gained;
     gameState.lifetimePrestigePoints += gained;
     gameState.clickCount = 0;
     gameState.combo = 1;
     gameState.lastComboMilestone = 0;
-    gameState.runUpgrades = [];   // upgrades de dinheiro são por run
+    gameState.runUpgrades = [];          // upgrades de dinheiro são por run
     gameState.tempBoostExpiry = 0;
     upgrades.forEach(u => { u.owned = 0; u.manager = false; });
 
-    // Capital inicial e equipe fixa: recompensas da loja que aceleram a próxima run
+    // Recompensas da loja que aceleram a próxima run
     const shop = gameState.prestigeShopLevels;
-    const startCashItem = PRESTIGE_SHOP.find(i => i.id === 'startingCash');
-    gameState.money = startCashItem ? startCashItem.valueFor(shop.startingCash) : 0;
+    const startCash = PRESTIGE_SHOP.find(i => i.id === 'startingCash');
+    gameState.money = startCash ? startCash.valueFor(shop.startingCash) : 0;
     for (let i = 0; i < shop.freeManagers && i < upgrades.length; i++) upgrades[i].manager = true;
 
-    createUpgradeButtons();
-    showNotification(`Prestígio #${gameState.prestigeLevel}! ×${gameState.getEffectiveMultiplier().toFixed(2)} | +${gained} ponto${gained === 1 ? '' : 's'}`, '⭐', 4000);
+    if (onReset) onReset();
+    showNotification(
+        `Prestígio #${gameState.prestigeLevel}! ×${getEffectiveMultiplier().toFixed(2)} | +${gained} ponto${gained === 1 ? '' : 's'}`,
+        '⭐', 4000);
     spawnConfetti();
     playSound(2000, 200);
+    return true;
 }
 
-function checkAchievements() {
-    let unlockedNew = false;
+// ============ CONQUISTAS ============
+/** @param {(count: number) => void} onUnlock avisa a UI para atualizar o badge. */
+export function checkAchievements(onUnlock) {
+    let unlocked = false;
     for (const a of ACHIEVEMENTS) {
-        if (!gameState.unlockedAchievements.includes(a.id) && a.check(gameState)) {
-            gameState.unlockedAchievements.push(a.id);
-            showNotification(`${a.name} desbloqueada!`, '🏆');
-            unlockedNew = true;
-        }
+        if (gameState.unlockedAchievements.includes(a.id) || !a.check(gameState)) continue;
+        gameState.unlockedAchievements.push(a.id);
+        showNotification(`${a.name} desbloqueada!`, '🏆');
+        unlocked = true;
     }
-    if (unlockedNew) {
-        el.achBadge.style.display = 'flex';
-        el.achBadge.textContent = gameState.unlockedAchievements.length;
+    if (unlocked) {
+        if (onUnlock) onUnlock(gameState.unlockedAchievements.length);
         gameState.save();
     }
 }
 
-function runAI() {
-    if (!el.aiToggle.checked) return;
+// ============ AUTOMAÇÃO ============
+let automationEnabled = true;
+export function setAutomationEnabled(value) { automationEnabled = !!value; }
+
+export function runAI() {
+    if (!automationEnabled) return;
 
     const attempts = 3 * getRunEffectValue('aiSpeed', 1);
-
-    for (let attempt = 0; attempt < attempts; attempt++) {
+    for (let i = 0; i < attempts; i++) {
         let bestIdx = -1, bestRoi = 0;
-
-        for (let i = 0; i < upgrades.length; i++) {
-            if (!upgrades[i].manager) continue;
-            const cost = getUpgradeCost(i);
-            const income = getUpgradeIncome(i);
-            if (gameState.money >= cost) {
-                const roi = income / cost;
-                if (Number.isFinite(roi) && roi > bestRoi) {
-                    bestRoi = roi;
-                    bestIdx = i;
-                }
-            }
+        for (let j = 0; j < upgrades.length; j++) {
+            if (!upgrades[j].manager) continue;
+            const cost = getUpgradeCost(j);
+            if (gameState.money < cost) continue;
+            const roi = getUpgradeIncome(j) / cost;
+            if (Number.isFinite(roi) && roi > bestRoi) { bestRoi = roi; bestIdx = j; }
         }
-
         if (bestIdx < 0) break;
 
-        // mantém 20% de reserva para o jogador poder comprar upgrades/gerentes manualmente
+        // Reserva 20% para o jogador comprar upgrades e gerentes manualmente
         const cost = getUpgradeCost(bestIdx);
         if (gameState.money - cost < gameState.money * 0.20) break;
-
         gameState.money -= cost;
         upgrades[bestIdx].owned++;
     }
 }
 
+// ============ EVENTOS DOURADOS ============
+export function spawnGoldenEvent() {
+    if (document.querySelector('.modal.active')) return;
+
+    const node = document.createElement('div');
+    node.className = 'golden-event';
+    node.textContent = '💰';
+    document.body.appendChild(node);
+
+    // offsetWidth e não getBoundingClientRect: a animação de entrada começa em
+    // scale(0), então o rect mediria zero e os limites sairiam errados.
+    const size = node.offsetWidth || 54;
+    const margin = 12;
+    const maxLeft = Math.max(margin, window.innerWidth - size - margin);
+    const minTop = 90;  // abaixo do cabeçalho
+    const maxTop = Math.max(minTop, window.innerHeight - size - margin);
+    node.style.left = (margin + Math.random() * (maxLeft - margin)) + 'px';
+    node.style.top = (minTop + Math.random() * (maxTop - minTop)) + 'px';
+
+    const timeout = setTimeout(() => node.remove(), 8000);
+    node.addEventListener('click', () => {
+        clearTimeout(timeout);
+        node.remove();
+
+        if (Math.random() < 0.5) {
+            const duration = getRunEffectValue('goldenDuration', 20000);
+            gameState.tempBoostMult = 3;
+            gameState.tempBoostExpiry = Date.now() + duration;
+            showNotification(`Renda ×3 por ${Math.round(duration / 1000)}s!`, '⚡', 3000);
+        } else {
+            const bonus = Math.max(50, getRawDPS() * getEffectiveMultiplier() * 60);
+            gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
+            gameState.totalEarned += bonus;
+            showNotification(`Bônus de ${formatNumber(bonus)}!`, '💰', 3000);
+        }
+        spawnConfetti();
+        playSound(2200, 200);
+    });
+}

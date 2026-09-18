@@ -1,12 +1,19 @@
-// Efeitos visuais: PixiJS com fallback em DOM.
+// Efeitos visuais: PixiJS acelerado por GPU, com fallback em DOM quando a
+// biblioteca não carrega (CDN bloqueada, rede offline).
 
-// ============ PIXI VFX ENGINE (com fallback DOM) ============
+import { formatNumber } from './utils.js';
+
 let pixiApp = null;
 let pixiAmbientTimer = 0;
 
+// Celulares têm menos GPU e tela menor: menos partículas, mesmo efeito.
+const isSmallScreen = () => window.innerWidth < 600;
+const CONFETTI_COUNT = () => isSmallScreen() ? 45 : 90;
+const AMBIENT_INTERVAL_MS = () => isSmallScreen() ? 3800 : 2200;
+
 function easeOutQuad(t) { return 1 - (1 - t) * (1 - t); }
 
-async function initPixiEngine() {
+export async function initPixiEngine() {
     try {
         if (typeof PIXI === 'undefined') throw new Error('PIXI não carregado');
         const app = new PIXI.Application();
@@ -22,7 +29,7 @@ async function initPixiEngine() {
         pixiApp = app;
         pixiApp.ticker.add(() => {
             pixiAmbientTimer += pixiApp.ticker.deltaMS;
-            if (pixiAmbientTimer > 2200) {
+            if (pixiAmbientTimer > AMBIENT_INTERVAL_MS()) {
                 pixiAmbientTimer = 0;
                 spawnAmbientMote();
             }
@@ -63,7 +70,7 @@ function spawnAmbientMote() {
     pixiApp.ticker.add(tick);
 }
 
-function spawnClickParticle(amount, x, y, isCrit = false) {
+export function spawnClickParticle(amount, x, y, isCrit = false) {
     if (!pixiApp) return spawnClickParticleDOM(amount, x, y, isCrit);
     const text = new PIXI.Text({
         text: (isCrit ? 'CRÍTICO! ' : '') + '+' + formatNumber(amount),
@@ -94,11 +101,12 @@ function spawnClickParticle(amount, x, y, isCrit = false) {
     pixiApp.ticker.add(tick);
 }
 
-function spawnConfetti() {
+export function spawnConfetti() {
     if (!pixiApp) return spawnConfettiDOM();
     const colors = [0xffd700, 0x00d4ff, 0x00ff88, 0xffaa00, 0xb366ff];
     const pieces = [];
-    for (let i = 0; i < 90; i++) {
+    const count = CONFETTI_COUNT();
+    for (let i = 0; i < count; i++) {
         const g = new PIXI.Graphics();
         const color = colors[Math.floor(Math.random() * colors.length)];
         if (Math.random() > 0.5) g.circle(0, 0, 4).fill(color); else g.rect(-4, -4, 8, 8).fill(color);
@@ -124,4 +132,32 @@ function spawnConfetti() {
         }
     };
     pixiApp.ticker.add(tick);
+}
+
+// ============ FALLBACK EM DOM ============
+// Usado quando o PixiJS não carrega. Mesma leitura visual, via CSS.
+function spawnClickParticleDOM(amount, x, y, isCrit = false) {
+    const node = document.createElement('div');
+    node.className = 'click-particle' + (isCrit ? ' crit' : '');
+    node.textContent = (isCrit ? 'CRÍTICO! ' : '') + '+' + formatNumber(amount);
+    node.style.left = (x + (Math.random() * 40 - 20)) + 'px';
+    node.style.top = y + 'px';
+    document.body.appendChild(node);
+    setTimeout(() => node.remove(), 900);
+}
+
+function spawnConfettiDOM() {
+    const colors = ['#ffd700', '#00d4ff', '#00ff88', '#ffaa00', '#b366ff'];
+    const count = isSmallScreen() ? 20 : 40;
+    for (let i = 0; i < count; i++) {
+        const node = document.createElement('div');
+        node.className = 'confetti-piece';
+        node.style.left = Math.random() * 100 + 'vw';
+        node.style.background = colors[Math.floor(Math.random() * colors.length)];
+        node.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        node.style.animationDuration = (1.8 + Math.random() * 1.4) + 's';
+        node.style.animationDelay = (Math.random() * 0.3) + 's';
+        document.body.appendChild(node);
+        setTimeout(() => node.remove(), 3500);
+    }
 }

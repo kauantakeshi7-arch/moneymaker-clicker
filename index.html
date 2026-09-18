@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="MoneyMaker — jogo clicker/incremental com prestígio infinito, gerentes, sinergias e eventos.">
     <title>💎 MoneyMaker</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.17.1/pixi.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.17.1/pixi.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -35,9 +34,9 @@
     </div>
     
     <div style="display: flex; gap: 4px; position: relative;">
-        <button class="btn" onclick="openModal('infoModal')" style="padding: 6px 8px;">ℹ️</button>
-        <button class="btn" onclick="toggleChart()" style="padding: 6px 8px;">📈</button>
-        <button class="btn" onclick="openModal('achievementsModal')" style="padding: 6px 8px; position: relative;">
+        <button class="btn" data-action="openModal" data-target="infoModal" style="padding: 6px 8px;">ℹ️</button>
+        <button class="btn" data-action="toggleChart" style="padding: 6px 8px;">📈</button>
+        <button class="btn" data-action="openModal" data-target="achievementsModal" style="padding: 6px 8px; position: relative;">
             🏆<span class="ach-badge" id="achBadge" style="display:none;">0</span>
         </button>
     </div>
@@ -83,10 +82,10 @@
     <div class="section-header">🏢 Negócios</div>
     <div class="bulk-bar">
         <span style="font-size: 9px; color: var(--text-secondary);">Comprar:</span>
-        <button class="bulk-btn active" data-mode="1" onclick="setBulkMode(1)">×1</button>
-        <button class="bulk-btn" data-mode="10" onclick="setBulkMode(10)">×10</button>
-        <button class="bulk-btn" data-mode="25" onclick="setBulkMode(25)">×25</button>
-        <button class="bulk-btn" data-mode="max" onclick="setBulkMode('max')">MAX</button>
+        <button class="bulk-btn active" data-mode="1" data-action="setBulk" data-target="1">×1</button>
+        <button class="bulk-btn" data-mode="10" data-action="setBulk" data-target="10">×10</button>
+        <button class="bulk-btn" data-mode="25" data-action="setBulk" data-target="25">×25</button>
+        <button class="bulk-btn" data-mode="max" data-action="setBulk" data-target="max">MAX</button>
     </div>
     <div class="upgrades-grid" id="upgradesContainer"></div>
     
@@ -95,16 +94,16 @@
     </div>
     
     <div class="controls">
-        <button class="btn btn-prestige" id="prestigeBtn" onclick="prestige()" disabled>⭐</button>
-        <button class="btn" onclick="openModal('upgradeShopModal')" style="position: relative;">
+        <button class="btn btn-prestige" id="prestigeBtn" data-action="prestige" disabled>⭐</button>
+        <button class="btn" data-action="openModal" data-target="upgradeShopModal" style="position: relative;">
             ⚡<span class="ach-badge" id="upgradeBadge" style="display:none; background: var(--secondary);">0</span>
         </button>
-        <button class="btn" onclick="openModal('prestigeShopModal')" style="position: relative;">
+        <button class="btn" data-action="openModal" data-target="prestigeShopModal" style="position: relative;">
             🛒<span class="ach-badge" id="prestigePointBadge" style="display:none;">0</span>
         </button>
-        <button class="btn" onclick="openModal('economyModal')">💹</button>
-        <button class="btn" onclick="openModal('statsModal')">📊</button>
-        <button class="btn" onclick="openModal('settingsModal')">⚙️</button>
+        <button class="btn" data-action="openModal" data-target="economyModal">💹</button>
+        <button class="btn" data-action="openModal" data-target="statsModal">📊</button>
+        <button class="btn" data-action="openModal" data-target="settingsModal">⚙️</button>
     </div>
 </main>
 
@@ -143,7 +142,7 @@
                 ESPAÇO: Clique | P: Prestige | C: Gráfico | S: Stats
             </div>
         </div>
-        <button class="btn" onclick="closeModal('infoModal')" style="width: 100%; margin-top: 12px;">OK</button>
+        <button class="btn" data-action="closeModal" data-target="infoModal" style="width: 100%; margin-top: 12px;">OK</button>
     </div>
 </div>
 
@@ -155,7 +154,7 @@
             — permanentes, nunca resetam. Quanto mais fundo você vai antes de prestigiar, mais ganha.
         </div>
         <div id="prestigeShopContainer" style="max-height: 60vh; overflow-y: auto;"></div>
-        <button class="btn" onclick="closeModal('prestigeShopModal')" style="width: 100%; margin-top: 12px;">Fechar</button>
+        <button class="btn" data-action="closeModal" data-target="prestigeShopModal" style="width: 100%; margin-top: 12px;">Fechar</button>
     </div>
 </div>
 
@@ -167,7 +166,7 @@
             Disponível: <span id="upgradeShopMoney" style="color: var(--secondary); font-weight: bold;">$0</span>
         </div>
         <div id="upgradeShopContainer" style="max-height: 62vh; overflow-y: auto;"></div>
-        <button class="btn" onclick="closeModal('upgradeShopModal')" style="width: 100%; margin-top: 12px;">Fechar</button>
+        <button class="btn" data-action="closeModal" data-target="upgradeShopModal" style="width: 100%; margin-top: 12px;">Fechar</button>
     </div>
 </div>
 
@@ -178,7 +177,7 @@
             SEM cost scaling - Custo fixo, renda 10× por tier
         </div>
         <div id="economyContainer" style="max-height: 70vh; overflow-y: auto;"></div>
-        <button class="btn" onclick="closeModal('economyModal')" style="width: 100%; margin-top: 12px;">Fechar</button>
+        <button class="btn" data-action="closeModal" data-target="economyModal" style="width: 100%; margin-top: 12px;">Fechar</button>
     </div>
 </div>
 
@@ -189,7 +188,7 @@
             Cada conquista desbloqueada dá +1% de multiplicador permanente
         </div>
         <div id="achievementsContainer" style="max-height: 60vh; overflow-y: auto;"></div>
-        <button class="btn" onclick="closeModal('achievementsModal')" style="width: 100%; margin-top: 12px;">Fechar</button>
+        <button class="btn" data-action="closeModal" data-target="achievementsModal" style="width: 100%; margin-top: 12px;">Fechar</button>
     </div>
 </div>
 
@@ -197,7 +196,7 @@
     <div class="modal-content">
         <h2>📊 Estatísticas</h2>
         <div id="statsContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; font-size: 11px;"></div>
-        <button class="btn" onclick="closeModal('statsModal')" style="width: 100%;">Fechar</button>
+        <button class="btn" data-action="closeModal" data-target="statsModal" style="width: 100%;">Fechar</button>
     </div>
 </div>
 
@@ -214,22 +213,16 @@
                 🤖 Automação (só negócios com Gerente contratado)
             </label>
             <div style="border-top: 1px solid var(--primary); padding-top: 10px;">
-                <button class="btn" onclick="exportSave()" style="width: 100%; margin-bottom: 6px; font-size: 10px;">💾 Exportar</button>
-                <button class="btn" onclick="document.getElementById('importInput').click()" style="width: 100%; margin-bottom: 6px; font-size: 10px;">📤 Importar</button>
+                <button class="btn" data-action="exportSave" style="width: 100%; margin-bottom: 6px; font-size: 10px;">💾 Exportar</button>
+                <button class="btn" data-action="importSave" style="width: 100%; margin-bottom: 6px; font-size: 10px;">📤 Importar</button>
             </div>
-            <button class="btn" onclick="resetGame()" style="width: 100%; color: var(--danger); font-size: 10px;">🔄 Reset</button>
-            <button class="btn" onclick="closeModal('settingsModal')" style="width: 100%; margin-top: 10px; font-size: 10px;">Fechar</button>
+            <button class="btn" data-action="resetGame" style="width: 100%; color: var(--danger); font-size: 10px;">🔄 Reset</button>
+            <button class="btn" data-action="closeModal" data-target="settingsModal" style="width: 100%; margin-top: 10px; font-size: 10px;">Fechar</button>
         </div>
         <input type="file" id="importInput" style="display:none;" accept=".txt">
     </div>
 </div>
 
-<script src="js/config.js"></script>
-<script src="js/state.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/vfx.js"></script>
-<script src="js/economy.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/main.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

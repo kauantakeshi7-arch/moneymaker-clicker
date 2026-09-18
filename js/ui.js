@@ -1,18 +1,34 @@
-// Renderização do DOM: cards, modais e lojas.
+// Renderização do DOM: cards, modais, lojas e o sparkline.
+//
+// Esta camada lê o estado e desenha. Não decide regras de jogo — quando
+// precisa de um número derivado, pede a economy.js.
+
+import {
+    upgrades, MONEY_UPGRADES, MONEY_UPGRADES_BY_ID, PRESTIGE_SHOP, ACHIEVEMENTS,
+    totalOwned, getPrestigeCostForLevel
+} from './config.js';
+import { gameState } from './state.js';
+import { formatNumber, showNotification, playSound } from './utils.js';
+import { spawnConfetti } from './vfx.js';
+import {
+    getEffectiveMultiplier, getMultiplierBreakdown, getCritChance, getClickValue,
+    getRawDPS, getUpgradeCost, getUpgradeIncome, getUpgradeMilestoneMult,
+    getBusinessUpgradeMult, getBulkCost, getMaxAffordable, getManagerCost,
+    getBestBuyIndex, isBusinessUnlocked, pendingPrestigePoints
+} from './economy.js';
 
 // ============ UI ============
 let bulkMode = 1; // 1 | 10 | 25 | 'max'
-let chart = null, chartData = [0, 0, 0, 0, 0];
 
 // Referências de DOM resolvidas uma vez. O loop roda 10×/s: buscar os mesmos
 // ~60 elementos por frame era puro desperdício.
-const el = {};
+export const el = {};
 const CACHED_IDS = ['moneyDisplay','totalEarned','clickCount','comboDisplay','comboValue','multValue',
     'businessCount','prestigeDisplay','mpsDisplay','nextPrestigeCost','timeToPrestige','prestigeBtn',
     'prestigeProgressFill','prestigeProgressLabel','upgradeBadge','prestigePointBadge','chartContainer',
     'upgradesContainer','achBadge','aiToggle','soundToggle'];
 
-function cacheDomRefs() {
+export function cacheDomRefs() {
     for (const id of CACHED_IDS) el[id] = document.getElementById(id);
 }
 
@@ -25,7 +41,12 @@ function setHtml(node, value) {
     if (node && node._last !== value) { node.innerHTML = value; node._last = value; }
 }
 
-function setBulkMode(mode) {
+/** Quantidade efetiva para o modo de compra atual (bulkMode: 1, 10, 25 ou 'max'). */
+function getBuyQuantity(idx) {
+    return bulkMode === 'max' ? getMaxAffordable(idx) : bulkMode;
+}
+
+export function setBulkMode(mode) {
     bulkMode = mode;
     document.querySelectorAll('.bulk-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.mode === String(mode));
@@ -36,7 +57,7 @@ function setBulkMode(mode) {
 // Referências dos filhos de cada card, guardadas na criação
 let cardRefs = [];
 
-function createUpgradeButtons() {
+export function createUpgradeButtons() {
     const container = el.upgradesContainer || document.getElementById('upgradesContainer');
     container.innerHTML = '';
     cardRefs = [];
@@ -81,7 +102,7 @@ function createUpgradeButtons() {
     updateManagerButtons();
 }
 
-function buyUpgrade(idx, e) {
+export function buyUpgrade(idx, e) {
     if (!isBusinessUnlocked(idx)) return;
     const card = e.target.closest('.upgrade-btn');
 
@@ -108,7 +129,7 @@ function buyUpgrade(idx, e) {
     updateDisplay();
 }
 
-function buyManager(idx) {
+export function buyManager(idx) {
     if (upgrades[idx].manager) return;
     const cost = getManagerCost(idx);
     if (gameState.money >= cost) {
@@ -120,7 +141,7 @@ function buyManager(idx) {
     }
 }
 
-function updateManagerButtons() {
+export function updateManagerButtons() {
     for (let i = 0; i < cardRefs.length; i++) {
         const btn = cardRefs[i].manager;
         if (!btn) continue;
@@ -137,7 +158,7 @@ function updateManagerButtons() {
     }
 }
 
-function updateEconomy() {
+export function updateEconomy() {
     const container = document.getElementById('economyContainer');
     container.innerHTML = upgrades.map((u, i) => {
         const cost = getUpgradeCost(i);
@@ -149,7 +170,7 @@ function updateEconomy() {
         if (payback >= 60) paybackStr = (payback / 60).toFixed(1) + 'm';
         if (payback >= 3600) paybackStr = (payback / 3600).toFixed(1) + 'h';
         
-        const mult = gameState.getEffectiveMultiplier();
+        const mult = getEffectiveMultiplier();
         const effRoi = ((income * mult) / cost).toFixed(5);
         return `
             <div style="background: rgba(0,212,255,0.05); border: 1px solid var(--primary); border-radius: 4px; padding: 8px; margin-bottom: 6px;">
@@ -163,10 +184,10 @@ function updateEconomy() {
     }).join('');
 }
 
-function updateStats() {
+export function updateStats() {
     const container = document.getElementById('statsContainer');
     const timePlayed = Math.floor((Date.now() - gameState.sessionStart) / 60000);
-    const mult = gameState.getEffectiveMultiplier();
+    const mult = getEffectiveMultiplier();
     const dps = getRawDPS() * mult;
 
     const stats = [
@@ -176,15 +197,15 @@ function updateStats() {
         { label: 'Multiplicador', value: '×' + mult.toFixed(2) },
         { label: 'Cliques', value: gameState.clickCount },
         { label: 'Combo Máx', value: '×' + gameState.maxCombo },
-        { label: 'Chance Crítico', value: (gameState.critChance * 100).toFixed(0) + '%' },
+        { label: 'Chance Crítico', value: (getCritChance() * 100).toFixed(0) + '%' },
         { label: 'Prestígio', value: gameState.prestigeLevel },
         { label: 'Pontos 💎', value: gameState.prestigePoints },
         { label: 'Upgrades da Run', value: gameState.runUpgrades.length + '/' + MONEY_UPGRADES.length },
-        { label: 'Negócios', value: upgrades.reduce((a, b) => a + b.owned, 0) },
+        { label: 'Negócios', value: totalOwned() },
         { label: 'Tempo', value: timePlayed + 'm' }
     ];
 
-    const breakdown = gameState.getMultiplierBreakdown();
+    const breakdown = getMultiplierBreakdown();
     const breakdownRows = Object.entries(breakdown)
         .filter(([, v]) => v !== 1)
         .map(([k, v]) => `<div style="display:flex; justify-content:space-between;"><span>${k}</span><span style="color: var(--secondary);">×${v.toFixed(2)}</span></div>`)
@@ -202,7 +223,7 @@ function updateStats() {
         </div>` : '');
 }
 
-function openModal(id) {
+export function openModal(id) {
     document.getElementById(id).classList.add('active');
     if (id === 'economyModal') updateEconomy();
     if (id === 'statsModal') updateStats();
@@ -211,7 +232,7 @@ function openModal(id) {
     if (id === 'upgradeShopModal') updateUpgradeShop();
 }
 
-function updateAchievements() {
+export function updateAchievements() {
     document.getElementById('achCount').textContent = gameState.unlockedAchievements.length;
     document.getElementById('achTotal').textContent = ACHIEVEMENTS.length;
     document.getElementById('achievementsContainer').innerHTML = ACHIEVEMENTS.map(a => `
@@ -225,7 +246,7 @@ function updateAchievements() {
     `).join('');
 }
 
-function updatePrestigeShop() {
+export function updatePrestigeShop() {
     document.getElementById('prestigePointsDisplay').textContent = gameState.prestigePoints;
     const container = document.getElementById('prestigeShopContainer');
     container.innerHTML = PRESTIGE_SHOP.map(item => {
@@ -240,7 +261,7 @@ function updatePrestigeShop() {
             extra = maxed ? ` (atual: ${formatNumber(cur)})` : ` (${formatNumber(cur)} → ${formatNumber(next)})`;
         }
         return `
-            <div class="achievement-item ${maxed || affordable ? '' : 'locked'}" style="justify-content: space-between; cursor: ${maxed ? 'default' : 'pointer'};" ${maxed ? '' : `onclick="buyPrestigeShopItem('${item.id}')"`}>
+            <div class="achievement-item ${maxed || affordable ? '' : 'locked'}" style="justify-content: space-between; cursor: ${maxed ? 'default' : 'pointer'};" ${maxed ? '' : `data-action="buyPrestige" data-target="${item.id}"`}>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <div class="ach-icon">${item.icon}</div>
                     <div>
@@ -257,7 +278,7 @@ function updatePrestigeShop() {
 }
 
 // ============ LOJA DE UPGRADES (dinheiro, por run) ============
-function updateUpgradeShop() {
+export function updateUpgradeShop() {
     document.getElementById('upgradeShopMoney').textContent = formatNumber(gameState.money);
     const container = document.getElementById('upgradeShopContainer');
     const cats = [...new Set(MONEY_UPGRADES.map(u => u.cat))];
@@ -266,16 +287,16 @@ function updateUpgradeShop() {
     for (const cat of cats) {
         const items = MONEY_UPGRADES.filter(u => u.cat === cat);
         // esconde categorias ainda totalmente indisponíveis, evita parede de itens travados
-        const visible = items.filter(u => gameState.hasUpgrade(u.id) || u.req() || u.cost <= gameState.money * 50);
+        const visible = items.filter(u => gameState.hasUpgrade(u.id) || u.req(gameState) || u.cost <= gameState.money * 50);
         if (visible.length === 0) continue;
 
         html += `<div class="section-header" style="margin-top: 10px;">${cat}</div>`;
         html += visible.map(up => {
             const owned = gameState.hasUpgrade(up.id);
-            const met = up.req();
+            const met = up.req(gameState);
             const affordable = met && gameState.money >= up.cost;
             const cls = owned ? 'owned-upgrade' : (affordable ? '' : 'locked');
-            const clickAttr = (!owned && affordable) ? `onclick="buyMoneyUpgrade('${up.id}')"` : '';
+            const clickAttr = (!owned && affordable) ? `data-action="buyUpgrade" data-target="${up.id}"` : '';
             const right = owned ? '<span style="color: var(--secondary);">✓ ATIVO</span>'
                 : (met ? formatNumber(up.cost) : `🔒 ${up.reqText}`);
             return `
@@ -298,9 +319,9 @@ function updateUpgradeShop() {
     container.innerHTML = html || '<div style="font-size: 10px; color: var(--text-muted);">Continue jogando para desbloquear upgrades.</div>';
 }
 
-function buyMoneyUpgrade(id) {
+export function buyMoneyUpgrade(id) {
     const up = MONEY_UPGRADES_BY_ID[id];
-    if (!up || gameState.hasUpgrade(id) || !up.req()) return;
+    if (!up || gameState.hasUpgrade(id) || !up.req(gameState)) return;
     if (gameState.money < up.cost) return;
 
     gameState.money -= up.cost;
@@ -313,7 +334,7 @@ function buyMoneyUpgrade(id) {
     gameState.save();
 }
 
-function buyPrestigeShopItem(id) {
+export function buyPrestigeShopItem(id) {
     const item = PRESTIGE_SHOP.find(i => i.id === id);
     if (!item) return;
     const lvl = gameState.prestigeShopLevels[id];
@@ -329,11 +350,11 @@ function buyPrestigeShopItem(id) {
     }
 }
 
-function closeModal(id) {
+export function closeModal(id) {
     document.getElementById(id).classList.remove('active');
 }
 
-function exportSave() {
+export function exportSave() {
     try {
         const data = localStorage.getItem('mm_save_v15');
         if (!data) { alert('Sem save!'); return; }
@@ -347,14 +368,14 @@ function exportSave() {
 // ============ RENDER DO FRAME ============
 let badgeThrottle = 0;
 
-function updateDisplay() {
+export function updateDisplay() {
     gameState.validate();
 
     if (gameState.combo > 1 && Date.now() - gameState.lastClickTime > 1000) {
         gameState.combo = 1;
     }
 
-    const mult = gameState.getEffectiveMultiplier();
+    const mult = getEffectiveMultiplier();
     const rawDps = getRawDPS();
     const dps = rawDps * mult;
 
@@ -445,7 +466,7 @@ function updateDisplay() {
         badgeThrottle = 5;
         let affordable = 0;
         for (const up of MONEY_UPGRADES) {
-            if (!gameState.hasUpgrade(up.id) && gameState.money >= up.cost && up.req()) affordable++;
+            if (!gameState.hasUpgrade(up.id) && gameState.money >= up.cost && up.req(gameState)) affordable++;
         }
         el.upgradeBadge.style.display = affordable > 0 ? 'flex' : 'none';
         setText(el.upgradeBadge, affordable);
@@ -454,51 +475,85 @@ function updateDisplay() {
         setText(el.prestigePointBadge, gameState.prestigePoints);
     }
 
-    updateChart();
+    drawChart();
 }
 
-// ============ GRÁFICO ============
-function updateChart() {
-    // Sem isto o Chart.js redesenhava 10×/s mesmo com o painel fechado:
-    // era o item mais caro do frame inteiro.
-    if (!chart || !el.chartContainer.classList.contains('active')) return;
+// ============ SPARKLINE ============
+// Canvas próprio no lugar do Chart.js: eram 57KB de dependência para desenhar
+// 5 pontos. Aqui cabem 60 amostras (30s de histórico) em ~40 linhas.
+const CHART_POINTS = 60;
+const chartHistory = new Array(CHART_POINTS).fill(0);
+let chartCanvas = null, chartCtx = null;
 
-    const val = Math.max(0, Math.floor(gameState.money));
-    chartData.push(Number.isFinite(val) ? val : 0);
-    chartData.shift();
-    chart.data.datasets[0].data = chartData;
-    chart.update('none');
+export function initChart() {
+    chartCanvas = document.getElementById('progressChart');
+    chartCtx = chartCanvas ? chartCanvas.getContext('2d') : null;
 }
 
-function initChart() {
-    try {
-        chart = new Chart(document.getElementById('progressChart'), {
-            type: 'line',
-            data: {
-                labels: ['-2s', '-1.5s', '-1s', '-0.5s', 'Agora'],
-                datasets: [{
-                    label: 'Dinheiro', data: chartData,
-                    borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.1)',
-                    tension: 0.4, fill: true, pointRadius: 2
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, animation: false,
-                plugins: { legend: { labels: { color: '#ffffff' } } },
-                scales: {
-                    y: { ticks: { color: '#aaaaaa' }, grid: { color: 'rgba(0,212,255,0.1)' } },
-                    x: { ticks: { color: '#aaaaaa' }, grid: { color: 'rgba(0,212,255,0.1)' } }
-                }
-            }
-        });
-    } catch (e) {}
+// Amostrar é barato (push/shift), então roda sempre: ao abrir o painel
+// o histórico já está cheio em vez de começar vazio.
+export function recordChartSample() {
+    chartHistory.push(Number.isFinite(gameState.money) ? Math.max(0, gameState.money) : 0);
+    chartHistory.shift();
 }
 
-function toggleChart() {
+export function drawChart() {
+    if (!chartCtx || !el.chartContainer.classList.contains('active')) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = chartCanvas.clientWidth, h = chartCanvas.clientHeight;
+    if (!w || !h) return;
+    if (chartCanvas.width !== w * dpr || chartCanvas.height !== h * dpr) {
+        chartCanvas.width = w * dpr;
+        chartCanvas.height = h * dpr;
+    }
+
+    const ctx = chartCtx;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    let max = 0, min = Infinity;
+    for (const v of chartHistory) { if (v > max) max = v; if (v < min) min = v; }
+    if (max <= 0) return;
+    if (min === max) min = 0;
+
+    const range = max - min || 1;
+    const px = i => (i / (CHART_POINTS - 1)) * w;
+    const py = v => h - 6 - ((v - min) / range) * (h - 24);
+
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (let i = 0; i < CHART_POINTS; i++) ctx.lineTo(px(i), py(chartHistory[i]));
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, 'rgba(0,212,255,0.35)');
+    grad.addColorStop(1, 'rgba(0,212,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    for (let i = 0; i < CHART_POINTS; i++) {
+        const x = px(i), y = py(chartHistory[i]);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    ctx.fillStyle = '#aaaaaa';
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.fillText(formatNumber(max), 4, 12);
+    ctx.fillText('← 30s', 4, h - 4);
+}
+
+export function toggleChart() {
     el.chartContainer.classList.toggle('active');
+    drawChart();
 }
 
-function resetGame() {
+export function resetGame() {
     if (!confirm('Reiniciar a run atual? Você mantém prestígio, pontos 💎 e conquistas.')) return;
     gameState.money = 0;
     gameState.clickCount = 0;
