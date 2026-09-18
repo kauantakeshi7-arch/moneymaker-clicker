@@ -359,6 +359,29 @@ test('modo febre só ativa se o upgrade estiver comprado e combo >= 50', () => {
     assert(!isFeverActive(), 'modo febre deve desativar abaixo de 50');
 });
 
+test('aceleração dourada temporária multiplica o multiplicador efetivo por 3', () => {
+    reset();
+    const baseMult = getEffectiveMultiplier();
+    gameState.tempBoostMult = 3;
+    gameState.tempBoostExpiry = Date.now() + 10000;
+    const boostedMult = getEffectiveMultiplier();
+    assert(close(boostedMult, baseMult * 3), 'impulso dourado deve triplicar o multiplicador', { baseMult, boostedMult });
+    gameState.tempBoostExpiry = 0;
+    assert(close(getEffectiveMultiplier(), baseMult), 'expiração do impulso deve restaurar multiplicador base');
+});
+
+test('marcos de negócios (milestone tiers) escalam multiplicadores corretamente', () => {
+    reset();
+    upgrades[0].owned = 9;
+    assert(getUpgradeMilestoneMult(0) === 1, 'abaixo de 10 deve ser 1x');
+    upgrades[0].owned = 10;
+    assert(getUpgradeMilestoneMult(0) === 2, 'em 10 deve ser 2x');
+    upgrades[0].owned = 25;
+    assert(getUpgradeMilestoneMult(0) === 2.5, 'em 25 deve ser 2.5x');
+    upgrades[0].owned = 50;
+    assert(getUpgradeMilestoneMult(0) === 4, 'em 50 deve ser 4x');
+});
+
 /** Roda tudo e devolve o relatório. */
 export function runSuite() {
     const results = [];

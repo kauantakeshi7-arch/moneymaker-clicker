@@ -5,7 +5,7 @@ import { gameState } from './state.js';
 import {
     formatNumber, showNotification, playSound, setSoundEnabled, showBanner, shockwave,
     playClickSound, playCashSound, playCritSound, playPrestigeSound,
-    setNotationMode, setHapticsEnabled
+    setNotationMode, setHapticsEnabled, setMusicEnabled
 } from './utils.js';
 import { initPixiEngine, spawnClickParticle, spawnConfetti } from './vfx.js';
 import {
@@ -156,16 +156,19 @@ function init() {
     const autoOn = localStorage.getItem('aiEnabled') !== 'false';
     const hapticsOn = localStorage.getItem('hapticsEnabled') !== 'false';
     const notationPref = localStorage.getItem('notation') || 'standard';
+    const musicOn = localStorage.getItem('musicEnabled') === 'true';
 
     el.soundToggle.checked = soundOn;
     el.aiToggle.checked = autoOn;
     if (el.hapticsToggle) el.hapticsToggle.checked = hapticsOn;
     if (el.notationToggle) el.notationToggle.checked = notationPref === 'scientific';
+    if (el.musicToggle) el.musicToggle.checked = musicOn;
 
     setSoundEnabled(soundOn);
     setAutomationEnabled(autoOn);
     setHapticsEnabled(hapticsOn);
     setNotationMode(notationPref);
+    setMusicEnabled(musicOn);
 
     el.soundToggle.addEventListener('change', (e) => {
         localStorage.setItem('soundEnabled', e.target.checked);
@@ -174,6 +177,20 @@ function init() {
     el.aiToggle.addEventListener('change', (e) => {
         localStorage.setItem('aiEnabled', e.target.checked);
         setAutomationEnabled(e.target.checked);
+    });
+    if (el.musicToggle) {
+        el.musicToggle.addEventListener('change', (e) => {
+            localStorage.setItem('musicEnabled', e.target.checked);
+            setMusicEnabled(e.target.checked);
+        });
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            setMusicEnabled(false);
+        } else {
+            const curMusic = localStorage.getItem('musicEnabled') === 'true';
+            setMusicEnabled(curMusic);
+        }
     });
     if (el.hapticsToggle) {
         el.hapticsToggle.addEventListener('change', (e) => {

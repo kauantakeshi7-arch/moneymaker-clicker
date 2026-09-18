@@ -137,6 +137,15 @@
             <div class="prestige-progress-bar"><div class="prestige-progress-fill" id="prestigeProgressFill"></div></div>
             <div class="prestige-progress-label" id="prestigeProgressLabel">Progresso para o próximo prestígio</div>
         </div>
+
+        <div id="boostBanner" class="boost-banner" style="display:none;">
+            <div class="boost-content">
+                <span class="boost-icon">⚡</span>
+                <span class="boost-text" id="boostText">ACELERAÇÃO DOURADA</span>
+                <span class="boost-timer" id="boostTimer">00s</span>
+            </div>
+            <div class="boost-bar"><div class="boost-fill" id="boostFill"></div></div>
+        </div>
     </div>
     
     <div class="info-grid">
@@ -306,7 +315,11 @@
         <div class="settings-list">
             <label class="setting-row">
                 <input type="checkbox" id="soundToggle" checked>
-                🔊 Som
+                🔊 Efeitos Sonoros
+            </label>
+            <label class="setting-row">
+                <input type="checkbox" id="musicToggle">
+                🎵 Música Ambiente (Synthwave Lo-Fi)
             </label>
             <label class="setting-row">
                 <input type="checkbox" id="hapticsToggle" checked>

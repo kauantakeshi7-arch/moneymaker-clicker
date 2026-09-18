@@ -259,6 +259,36 @@ main > * { flex-shrink: 0; }
 }
 .prestige-progress-label { font-size: 8px; color: var(--text-secondary); margin-top: 3px; text-align: center; letter-spacing: 0.5px; }
 
+/* Barra de Impulso Dourado / Aceleração Temporária */
+.boost-banner {
+    width: 100%; max-width: 320px;
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.45);
+    border-radius: 8px; padding: 6px 10px;
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.2);
+    animation: boostGlow 1.5s ease-in-out infinite alternate;
+}
+@keyframes boostGlow {
+    from { border-color: rgba(255, 215, 0, 0.4); box-shadow: 0 0 12px rgba(255, 215, 0, 0.2); }
+    to   { border-color: rgba(255, 255, 255, 0.85); box-shadow: 0 0 24px rgba(255, 215, 0, 0.5); }
+}
+.boost-content {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 8.5px; font-weight: 800; color: var(--gold); margin-bottom: 4px;
+}
+.boost-text { letter-spacing: 0.8px; }
+.boost-timer { font-family: 'Orbitron', monospace; color: #ffffff; }
+.boost-bar {
+    width: 100%; height: 5px; border-radius: 3px;
+    background: rgba(0, 0, 0, 0.45); overflow: hidden;
+}
+.boost-fill {
+    height: 100%; width: 100%;
+    background: linear-gradient(90deg, #ffaa00, #ffd700, #ffffff);
+    box-shadow: 0 0 8px #ffd700;
+    transition: width 0.15s linear;
+}
+
 /* ===== BOTÃO PRINCIPAL =====
    É o herói do jogo: ganha profundidade (luz no topo, sombra projetada) e
    dois anéis concêntricos que pulsam em contratempo, criando um alvo que
@@ -438,6 +468,74 @@ main > * { flex-shrink: 0; }
     font-weight: bold; font-size: 0.55em; z-index: 2;
     box-shadow: 0 0 8px rgba(0,212,255,0.6);
 }
+
+/* Badge de ícone e barra de progresso de marcos do negócio */
+.biz-icon-badge {
+    width: 36px; height: 36px; margin: 0 auto 2px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 9px; background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+    position: relative; z-index: 1;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.upgrade-btn:hover:not(.disabled) .biz-icon-badge {
+    transform: scale(1.06);
+    border-color: var(--primary);
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.35);
+}
+
+.biz-milestone-wrap {
+    width: 100%; display: flex; align-items: center; gap: 4px;
+    margin-top: 2px; position: relative; z-index: 1;
+}
+.biz-milestone-bar {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: rgba(0, 0, 0, 0.5); overflow: hidden;
+}
+.biz-milestone-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 2px;
+    transition: width 0.2s ease;
+    box-shadow: 0 0 6px rgba(0, 255, 136, 0.4);
+}
+.biz-milestone-label {
+    font-size: 7.5px; font-weight: 700; color: var(--text-secondary);
+    font-family: 'Orbitron', monospace; min-width: 26px; text-align: right;
+    letter-spacing: 0.2px;
+}
+
+/* Temas de cores por nível de negócio */
+.biz-tier-0 .biz-icon-badge { border-color: rgba(0, 255, 136, 0.25); }
+.biz-tier-0:not(.disabled) { border-color: rgba(0, 255, 136, 0.4); }
+
+.biz-tier-1 .biz-icon-badge { border-color: rgba(0, 212, 255, 0.25); }
+.biz-tier-1:not(.disabled) { border-color: rgba(0, 212, 255, 0.4); }
+
+.biz-tier-2 .biz-icon-badge { border-color: rgba(255, 215, 0, 0.25); }
+.biz-tier-2:not(.disabled) { border-color: rgba(255, 215, 0, 0.4); }
+.biz-tier-2 .biz-milestone-fill { background: linear-gradient(90deg, #ffaa00, #ffd700); box-shadow: 0 0 6px #ffd700; }
+
+.biz-tier-3 .biz-icon-badge { border-color: rgba(179, 102, 255, 0.25); }
+.biz-tier-3:not(.disabled) { border-color: rgba(179, 102, 255, 0.4); }
+.biz-tier-3 .biz-milestone-fill { background: linear-gradient(90deg, #9933ff, #b366ff); box-shadow: 0 0 6px #b366ff; }
+
+.biz-tier-4 .biz-icon-badge { border-color: rgba(255, 51, 102, 0.25); }
+.biz-tier-4:not(.disabled) { border-color: rgba(255, 51, 102, 0.4); }
+.biz-tier-4 .biz-milestone-fill { background: linear-gradient(90deg, #ff0055, #ff3366); box-shadow: 0 0 6px #ff3366; }
+
+.biz-tier-5 .biz-icon-badge { border-color: rgba(56, 189, 248, 0.3); }
+.biz-tier-5:not(.disabled) { border-color: rgba(56, 189, 248, 0.45); }
+.biz-tier-5 .biz-milestone-fill { background: linear-gradient(90deg, #0284c7, #38bdf8); box-shadow: 0 0 6px #38bdf8; }
+
+.biz-tier-6 {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(179, 102, 255, 0.08)) !important;
+}
+.biz-tier-6 .biz-icon-badge { border-color: rgba(255, 215, 0, 0.4); }
+.biz-tier-6:not(.disabled) { border-color: rgba(255, 215, 0, 0.6); }
+.biz-tier-6 .biz-milestone-fill { background: linear-gradient(90deg, #ff00ea, #ffd700); box-shadow: 0 0 8px #ffd700; }
+
 /* Seletor de compra em lote */
 .bulk-bar { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; flex-wrap: wrap; }
 .bulk-btn {
@@ -495,15 +593,23 @@ main > * { flex-shrink: 0; }
 .click-particle.crit { color: var(--gold) !important; font-size: 22px !important; text-shadow: 0 0 14px rgba(255,215,0,0.9), 0 0 3px #000 !important; }
 
 .golden-event {
-    position: fixed; width: 54px; height: 54px; border-radius: 50%;
+    position: fixed; width: 56px; height: 56px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center; font-size: 26px;
-    background: radial-gradient(circle, rgba(255,215,0,0.9), rgba(255,170,0,0.4));
-    box-shadow: 0 0 30px rgba(255,215,0,0.9), 0 0 60px rgba(255,215,0,0.5);
+    background: radial-gradient(circle at 35% 35%, #fff7a0, #ffd700 60%, #ff8800 100%);
+    box-shadow: 0 0 25px rgba(255,215,0,0.9), 0 0 50px rgba(255,170,0,0.6), inset 0 0 8px #ffffff;
     cursor: pointer; z-index: 180; pointer-events: auto;
-    animation: goldenPulse 0.8s ease-in-out infinite, goldenIn 0.3s ease;
+    animation: goldenFloat 2.5s ease-in-out infinite alternate, goldenPulse 0.9s ease-in-out infinite, goldenIn 0.3s ease;
 }
-@keyframes goldenPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-@keyframes goldenIn { from { transform: scale(0); } to { transform: scale(1); } }
+.golden-event::before {
+    content: ''; position: absolute; inset: -5px; border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.85);
+    animation: goldenSpin 4s linear infinite; pointer-events: none;
+}
+@keyframes goldenSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes goldenFloat { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
+@keyframes goldenPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+@keyframes goldenIn { from { transform: scale(0) rotate(-180deg); } to { transform: scale(1) rotate(0deg); } }
+
 
 /* ===== BARRA DE FERRAMENTAS =====
    Com rótulo: seis emojis sozinhos não diziam qual abria o quê. */

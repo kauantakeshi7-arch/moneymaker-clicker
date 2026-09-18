@@ -1,6 +1,6 @@
 // Render de um frame: cabeçalho, progresso e estado dos cards.
 
-import { upgrades, MONEY_UPGRADES, getPrestigeCostForLevel } from '../config.js';
+import { upgrades, MONEY_UPGRADES, getPrestigeCostForLevel, MILESTONE_TIERS } from '../config.js';
 import { gameState } from '../state.js';
 import { formatNumber, playSound, showBanner, shockwave } from '../utils.js';
 import { spawnConfetti } from '../vfx.js';
@@ -93,6 +93,22 @@ export function updateDisplay() {
     el.prestigeBtn.disabled = !canPrestige;
     el.prestigeBtn.classList.toggle('ready', canPrestige);
 
+    // Barra de Bônus Temporário Dourado
+    if (el.boostBanner) {
+        const remainingMs = gameState.tempBoostExpiry - Date.now();
+        if (remainingMs > 0) {
+            el.boostBanner.style.display = 'block';
+            const totalDuration = 20000;
+            const pct = Math.min(100, Math.max(0, (remainingMs / totalDuration) * 100));
+            if (el.boostFill) el.boostFill.style.width = `${pct.toFixed(1)}%`;
+            const s = Math.ceil(remainingMs / 1000);
+            setText(el.boostTimer, `${s}s`);
+            setText(el.boostText, `ACELERAÇÃO DOURADA: ×${gameState.tempBoostMult}`);
+        } else if (el.boostBanner.style.display !== 'none') {
+            el.boostBanner.style.display = 'none';
+        }
+    }
+
     const bestIdx = getBestBuyIndex();
     for (let i = 0; i < cardRefs.length; i++) {
         const refs = cardRefs[i];
@@ -127,6 +143,22 @@ export function updateDisplay() {
             setText(refs.count, owned);
         } else if (refs.count.style.display !== 'none') {
             refs.count.style.display = 'none';
+        }
+
+        // Barra de progresso para o próximo marco multiplicador
+        if (refs.milestoneFill && refs.milestoneLabel) {
+            const thresholds = MILESTONE_TIERS.map(t => t[0]).sort((a, b) => a - b);
+            const nextMilestone = thresholds.find(t => t > owned);
+            if (!nextMilestone) {
+                refs.milestoneFill.style.width = '100%';
+                setText(refs.milestoneLabel, `${owned} (MAX)`);
+            } else {
+                const prevIdx = thresholds.indexOf(nextMilestone) - 1;
+                const prevMilestone = prevIdx >= 0 ? thresholds[prevIdx] : 0;
+                const mPct = Math.min(100, Math.max(0, ((owned - prevMilestone) / (nextMilestone - prevMilestone)) * 100));
+                refs.milestoneFill.style.width = `${mPct.toFixed(1)}%`;
+                setText(refs.milestoneLabel, `${owned}/${nextMilestone}`);
+            }
         }
     }
     updateManagerButtons();

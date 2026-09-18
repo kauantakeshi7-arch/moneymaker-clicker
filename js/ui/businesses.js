@@ -37,15 +37,19 @@ export function createUpgradeButtons() {
     upgrades.forEach((u, i) => {
         const card = document.createElement('div');
         card.id = `upgrade-${i}`;
-        card.className = 'upgrade-btn';
+        card.className = `upgrade-btn biz-tier-${i}`;
         card.tabIndex = 0;
         card.setAttribute('role', 'button');
         card.innerHTML = `
             <div class="upgrade-qty"></div>
-            <svg class="upgrade-icon"><use href="#${u.glyph}"/></svg>
+            <div class="biz-icon-badge"><svg class="upgrade-icon"><use href="#${u.glyph}"/></svg></div>
             <div class="upgrade-name">${u.name}</div>
             <div class="upgrade-cost">${formatNumber(getUpgradeCost(i))}</div>
             <div class="upgrade-income">+${formatNumber(getUpgradeIncome(i))}/s</div>
+            <div class="biz-milestone-wrap">
+                <div class="biz-milestone-bar"><div class="biz-milestone-fill"></div></div>
+                <span class="biz-milestone-label">0/10</span>
+            </div>
             <div class="upgrade-count" style="display:none;"></div>
             <button class="manager-btn" title="Gerente automatiza a compra deste negócio"></button>
             <div class="upgrade-lock-overlay">
@@ -74,7 +78,9 @@ export function createUpgradeButtons() {
             income: card.querySelector('.upgrade-income'),
             count: card.querySelector('.upgrade-count'),
             lock: card.querySelector('.upgrade-lock'),
-            manager: card.querySelector('.manager-btn')
+            manager: card.querySelector('.manager-btn'),
+            milestoneFill: card.querySelector('.biz-milestone-fill'),
+            milestoneLabel: card.querySelector('.biz-milestone-label')
         };
         cardRefs.push(refs);
         refs.manager.addEventListener('click', (e) => {

@@ -153,6 +153,107 @@ export function playPrestigeSound() {
     } catch (e) { playSound(2000, 200); }
 }
 
+// ============ MÚSICA AMBIENTE PROCEDURAL (Sintetizador Web Audio) ============
+let musicEnabled = false;
+let musicGain = null;
+let musicTimer = null;
+let currentChordIdx = 0;
+let activeOscillators = [];
+
+const AMBIENT_CHORDS = [
+    [146.83, 220.00, 261.63, 329.63], // Dm9
+    [116.54, 174.61, 220.00, 261.63], // Bbmaj7
+    [174.61, 220.00, 261.63, 329.63], // Fmaj7
+    [130.81, 196.00, 246.94, 293.66]  // Cadd9
+];
+
+export function setMusicEnabled(enabled) {
+    musicEnabled = !!enabled;
+    if (musicEnabled) {
+        startAmbientMusic();
+    } else {
+        stopAmbientMusic();
+    }
+}
+
+export function startAmbientMusic() {
+    if (!musicEnabled || typeof window === 'undefined') return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    if (!musicGain) {
+        musicGain = ctx.createGain();
+        musicGain.gain.setValueAtTime(0.045, ctx.currentTime);
+        musicGain.connect(ctx.destination);
+    }
+
+    if (musicTimer) clearInterval(musicTimer);
+    playNextChord();
+    musicTimer = setInterval(playNextChord, 4200);
+}
+
+export function stopAmbientMusic() {
+    if (musicTimer) {
+        clearInterval(musicTimer);
+        musicTimer = null;
+    }
+    const ctx = getAudioContext();
+    if (ctx && activeOscillators.length > 0) {
+        activeOscillators.forEach(({ osc, gain }) => {
+            try {
+                gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+                setTimeout(() => { try { osc.stop(); osc.disconnect(); } catch (e) {} }, 700);
+            } catch (e) {}
+        });
+        activeOscillators = [];
+    }
+}
+
+function playNextChord() {
+    if (!musicEnabled || typeof window === 'undefined') return;
+    const ctx = getAudioContext();
+    if (!ctx || ctx.state === 'suspended') return;
+
+    const chord = AMBIENT_CHORDS[currentChordIdx];
+    currentChordIdx = (currentChordIdx + 1) % AMBIENT_CHORDS.length;
+
+    // Fade out anterior suave
+    const prev = [...activeOscillators];
+    activeOscillators = [];
+    prev.forEach(({ osc, gain }) => {
+        try {
+            gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+            setTimeout(() => { try { osc.stop(); osc.disconnect(); } catch (e) {} }, 1300);
+        } catch (e) {}
+    });
+
+    // Filtro analógico low-pass para som aveludado e relaxante
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(550, ctx.currentTime);
+    filter.Q.value = 1.2;
+    filter.connect(musicGain);
+
+    chord.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = i === 0 ? 'sine' : 'triangle';
+        osc.frequency.value = freq;
+        osc.detune.value = (Math.random() - 0.5) * 8; // Leve chorus
+
+        osc.connect(gain);
+        gain.connect(filter);
+
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.035, ctx.currentTime + 1.6);
+
+        osc.start(ctx.currentTime);
+        activeOscillators.push({ osc, gain });
+    });
+}
+
 /** Faixa central para acontecimentos grandes — um toast de canto não dá conta. */
 export function showBanner(kicker, title, sub = '', gold = false) {
     if (typeof document === 'undefined') return;
