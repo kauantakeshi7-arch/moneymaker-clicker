@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Testes — MoneyMaker</title>
+<style>
+    body {
+        background: #0f1420; color: #e6edf5; margin: 0; padding: 28px;
+        font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px;
+    }
+    h1 { font-size: 17px; margin: 0 0 4px; }
+    .sub { color: #7c8da3; font-size: 12px; margin-bottom: 20px; }
+    .summary {
+        padding: 12px 16px; border-radius: 10px; margin-bottom: 18px;
+        font-weight: 700; font-size: 14px;
+    }
+    .summary.pass { background: rgba(0,255,136,0.12); border: 1px solid rgba(0,255,136,0.5); color: #6dffb8; }
+    .summary.fail { background: rgba(255,80,80,0.12); border: 1px solid rgba(255,80,80,0.5); color: #ff9c9c; }
+    .case { padding: 7px 12px; border-left: 3px solid transparent; margin-bottom: 3px; border-radius: 0 6px 6px 0; }
+    .case.ok { border-color: #00cc88; background: rgba(255,255,255,0.03); }
+    .case.no { border-color: #ff5050; background: rgba(255,80,80,0.08); }
+    .mark { display: inline-block; width: 18px; }
+    .ok .mark { color: #00cc88; }
+    .no .mark { color: #ff5050; }
+    .err { color: #ff9c9c; margin: 5px 0 0 18px; font-size: 12px; }
+</style>
+</head>
+<body>
+    <h1>Bateria de regressão</h1>
+    <div class="sub">Cada caso aqui nasceu de um bug real. Rodando sobre os mesmos módulos do jogo.</div>
+    <div id="summary" class="summary">Rodando…</div>
+    <div id="results"></div>
+
+<script type="module">
+import { runSuite } from './suite.js';
+
+const report = runSuite();
+const summary = document.getElementById('summary');
+summary.className = 'summary ' + (report.failed ? 'fail' : 'pass');
+summary.textContent = report.failed
+    ? `${report.failed} de ${report.total} falharam`
+    : `${report.total} testes passaram`;
+
+document.getElementById('results').innerHTML = report.results.map(r => `
+    <div class="case ${r.ok ? 'ok' : 'no'}">
+        <span class="mark">${r.ok ? '✓' : '✕'}</span>${r.name}
+        ${r.ok ? '' : `<div class="err">${r.error}</div>`}
+    </div>
+`).join('');
+
+// para inspeção pelo console
+window.__report = report;
+</script>
+</body>
+</html>

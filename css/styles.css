@@ -460,6 +460,22 @@ main > * { flex-shrink: 0; }
 }
 .badge-green { background: var(--secondary); color: #042113; }
 
+/* ===== CLASSES DE MODAL =====
+   Substituem os estilos inline que se repetiam na marcação. */
+.modal-wide { min-width: 280px; max-width: 460px; }
+.modal-hint { font-size: 10px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
+.modal-scroll { max-height: 60vh; overflow-y: auto; }
+.info-body { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
+.info-block { margin-bottom: 12px; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; font-size: 11px; }
+.settings-list { display: flex; flex-direction: column; gap: 10px; font-size: 11px; }
+.settings-group { border-top: 1px solid var(--glass-border); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.setting-row { display: flex; align-items: center; gap: 8px; }
+.btn-block { width: 100%; }
+.btn-modal-close { margin-top: 12px; }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover:not(:disabled) { background: rgba(255,51,51,0.14); border-color: rgba(255,51,51,0.5); color: var(--danger); }
+
 /* .btn agora serve só aos botões dentro dos modais (fechar, exportar, reset) */
 .btn {
     background: rgba(255,255,255,0.05);

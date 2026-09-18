@@ -183,21 +183,21 @@
 </main>
 
 <div id="infoModal" class="modal">
-    <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-content modal-wide">
         <h2>ℹ️ MoneyMaker v17</h2>
-        <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.6;">
-            <div style="margin-bottom: 12px;">
+        <div class="info-body">
+            <div class="info-block">
                 <strong>As duas moedas:</strong><br>
                 • <strong>Dinheiro</strong> — compra negócios, gerentes e Upgrades (⚡). Tudo isso reseta no prestígio.<br>
                 • <strong>Pontos 💎</strong> — ganhos ao prestigiar, gastos na Loja de Prestígio (🛒). Nunca resetam.
             </div>
-            <div style="margin-bottom: 12px;">
+            <div class="info-block">
                 <strong>A decisão central:</strong><br>
                 Os pontos crescem com o quanto você acumulou: cada 1000× de progresso vale
                 +24 💎. Prestigiar cedo reinicia rápido; empurrar mais fundo rende mais.
                 A barra embaixo do botão mostra quanto você ganharia prestigiando agora.
             </div>
-            <div style="margin-bottom: 12px;">
+            <div class="info-block">
                 <strong>Sistemas:</strong><br>
                 • Clique vale % da renda passiva — nunca fica obsoleto<br>
                 • Cliques críticos, combos e Modo Febre recompensam jogo ativo<br>
@@ -206,7 +206,7 @@
                 • Gerentes (🤖) automatizam; negócios novos desbloqueiam com 5 do anterior<br>
                 • Prestígio infinito, progresso offline e eventos dourados aleatórios
             </div>
-            <div style="margin-bottom: 12px;">
+            <div class="info-block">
                 <strong>Como Jogar:</strong><br>
                 • Clique ou pressione ESPAÇO; use ×1/×10/×25/MAX para comprar em lote<br>
                 • ⭐ marca o negócio com melhor retorno por dólar agora<br>
@@ -222,25 +222,25 @@
 </div>
 
 <div id="prestigeShopModal" class="modal">
-    <div class="modal-content" style="min-width: 280px; max-width: 460px;">
+    <div class="modal-content modal-wide">
         <h2>🛒 Loja de Prestígio</h2>
-        <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 8px;">
+        <div class="modal-hint">
             Pontos: <span id="prestigePointsDisplay" style="color: var(--gold); font-weight: bold;">0</span>
             — permanentes, nunca resetam. Quanto mais fundo você vai antes de prestigiar, mais ganha.
         </div>
-        <div id="prestigeShopContainer" style="max-height: 60vh; overflow-y: auto;"></div>
+        <div id="prestigeShopContainer" class="modal-scroll"></div>
         <button class="btn" data-action="closeModal" data-target="prestigeShopModal" style="width: 100%; margin-top: 12px;">Fechar</button>
     </div>
 </div>
 
 <div id="upgradeShopModal" class="modal">
-    <div class="modal-content" style="min-width: 300px; max-width: 480px;">
+    <div class="modal-content modal-wide">
         <h2>⚡ Upgrades</h2>
-        <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 8px;">
+        <div class="modal-hint">
             Comprados com dinheiro e <strong>resetam a cada prestígio</strong> — cada run é um build diferente.<br>
             Disponível: <span id="upgradeShopMoney" style="color: var(--secondary); font-weight: bold;">$0</span>
         </div>
-        <div id="upgradeShopContainer" style="max-height: 62vh; overflow-y: auto;"></div>
+        <div id="upgradeShopContainer" class="modal-scroll"></div>
         <button class="btn" data-action="closeModal" data-target="upgradeShopModal" style="width: 100%; margin-top: 12px;">Fechar</button>
     </div>
 </div>
@@ -248,7 +248,7 @@
 <div id="economyModal" class="modal">
     <div class="modal-content">
         <h2>💹 Economia (v15)</h2>
-        <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 8px;">
+        <div class="modal-hint">
             SEM cost scaling - Custo fixo, renda 10× por tier
         </div>
         <div id="economyContainer" style="max-height: 70vh; overflow-y: auto;"></div>
@@ -257,12 +257,12 @@
 </div>
 
 <div id="achievementsModal" class="modal">
-    <div class="modal-content" style="min-width: 280px; max-width: 420px;">
+    <div class="modal-content modal-wide">
         <h2>🏆 Conquistas (<span id="achCount">0</span>/<span id="achTotal">0</span>)</h2>
         <div style="font-size: 9px; color: var(--text-secondary); margin-bottom: 8px;">
             Cada conquista desbloqueada dá +1% de multiplicador permanente
         </div>
-        <div id="achievementsContainer" style="max-height: 60vh; overflow-y: auto;"></div>
+        <div id="achievementsContainer" class="modal-scroll"></div>
         <button class="btn" data-action="closeModal" data-target="achievementsModal" style="width: 100%; margin-top: 12px;">Fechar</button>
     </div>
 </div>
@@ -270,24 +270,24 @@
 <div id="statsModal" class="modal">
     <div class="modal-content">
         <h2>📊 Estatísticas</h2>
-        <div id="statsContainer" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; font-size: 11px;"></div>
+        <div id="statsContainer" class="stats-grid"></div>
         <button class="btn" data-action="closeModal" data-target="statsModal" style="width: 100%;">Fechar</button>
     </div>
 </div>
 
 <div id="settingsModal" class="modal">
-    <div class="modal-content" style="min-width: 280px;">
+    <div class="modal-content">
         <h2>⚙️ Configurações</h2>
-        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 11px;">
-            <label style="display: flex; align-items: center; gap: 8px;">
+        <div class="settings-list">
+            <label class="setting-row">
                 <input type="checkbox" id="soundToggle" checked>
                 🔊 Som
             </label>
-            <label style="display: flex; align-items: center; gap: 8px;">
+            <label class="setting-row">
                 <input type="checkbox" id="aiToggle" checked>
                 🤖 Automação (só negócios com Gerente contratado)
             </label>
-            <div style="border-top: 1px solid var(--primary); padding-top: 10px;">
+            <div class="settings-group">
                 <button class="btn" data-action="exportSave" style="width: 100%; margin-bottom: 6px; font-size: 10px;">💾 Exportar</button>
                 <button class="btn" data-action="importSave" style="width: 100%; margin-bottom: 6px; font-size: 10px;">📤 Importar</button>
             </div>

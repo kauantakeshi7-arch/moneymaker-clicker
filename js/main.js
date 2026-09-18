@@ -9,17 +9,22 @@ import {
     getRunEffectValue, prestige, runAI, checkAchievements, spawnGoldenEvent,
     applyOfflineProgress, setAutomationEnabled, getEffectiveMultiplier
 } from './economy.js';
+import { el, cacheDomRefs } from './ui/dom.js';
+import { createUpgradeButtons, setBulkMode } from './ui/businesses.js';
+import { updateDisplay, resetUnlockTracking } from './ui/hud.js';
+import { initChart, recordChartSample, toggleChart } from './ui/chart.js';
 import {
-    el, cacheDomRefs, createUpgradeButtons, updateDisplay, setBulkMode,
-    openModal, closeModal, toggleChart, initChart, recordChartSample,
-    exportSave, resetGame, buyMoneyUpgrade, buyPrestigeShopItem, resetUnlockTracking
-} from './ui.js';
+    openModal, closeModal, exportSave, resetGame,
+    buyMoneyUpgrade, buyPrestigeShopItem
+} from './ui/modals.js';
 import { initSkyline, syncSkyline, drawSkyline, pruneSkyline } from './skyline.js';
 
 // Namespaces só para o console de depuração (ver `exposeDebugApi` no fim).
 import * as config from './config.js';
 import * as economy from './economy.js';
-import * as ui from './ui.js';
+import * as ui from './ui/hud.js';
+import * as uiCards from './ui/businesses.js';
+import * as uiModals from './ui/modals.js';
 import * as utils from './utils.js';
 import * as skyline from './skyline.js';
 
@@ -243,7 +248,8 @@ function exposeDebugApi() {
         || location.hostname === '127.0.0.1'
         || location.search.includes('debug');
     if (!isDev) return;
-    window.MM = { state: gameState, config, economy, ui, utils, skyline, simulationTick };
+    window.MM = { state: gameState, config, economy, utils, skyline,
+        ui: { ...ui, ...uiCards, ...uiModals, el }, simulationTick };
     console.info('MoneyMaker: API de depuração em window.MM');
 }
 
