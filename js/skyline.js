@@ -24,6 +24,7 @@ const FRAME_MS = 45;        // ~22fps: é cenário ambiente, não precisa de 60
 
 let canvas = null, ctx = null;
 let buildings = [], stars = [], beams = [], lastCounts = [], lastUnlocked = [];
+let drones = [], shootingStar = null;
 let lastFrame = 0, ready = false;
 
 // Sorteio determinístico: a mesma unidade cai sempre no mesmo lugar, então a
@@ -41,6 +42,12 @@ export function initSkyline() {
         x: rand(i * 3.1), y: rand(i * 7.7) * 0.6, r: 0.5 + rand(i * 5.3) * 1.1,
         tw: rand(i * 2.2) * 6.28
     }));
+    drones = [
+        { x: 0.1, y: 0.22, vx: 0.00012, dir: 1, color: '#00d4ff', size: 1.8 },
+        { x: 0.8, y: 0.38, vx: -0.00009, dir: -1, color: '#ffaa00', size: 1.6 },
+        { x: 0.4, y: 0.16, vx: 0.00015, dir: 1, color: '#00ff88', size: 2.0 },
+        { x: 0.9, y: 0.28, vx: -0.00011, dir: -1, color: '#ff3366', size: 1.7 }
+    ];
     lastCounts = upgrades.map(() => 0);
     lastUnlocked = upgrades.map((u, i) => i === 0 || u.owned > 0 || (i > 0 && upgrades[i - 1].owned >= BUSINESS_UNLOCK_THRESHOLD));
     syncSkyline(true);
@@ -113,7 +120,9 @@ export function drawSkyline(now) {
 
     drawSky(w, h, groundY);
     drawStars(w, groundY, now);
+    drawShootingStar(w, groundY, now);
     drawFarLayer(w, groundY, scale);
+    drawDrones(w, groundY, scale, now);
 
     // Os prédios são desenhados do tier menor para o maior, então os grandes
     // ficam ao fundo e a silhueta cresce em camadas.
@@ -227,6 +236,9 @@ function drawBuilding(b, w, groundY, scale, now) {
         ctx.fill();
         blink(x + bw / 2, y - 14 * scale, scale, now, b.seed, '#ffd700');
     }
+    if (b.tier >= 4 && b.index % 2 === 0 && grow > 0.9) {
+        drawHoloBillboard(x, y, bw, scale, now, b.seed);
+    }
     ctx.globalAlpha = 1;
 }
 
@@ -309,4 +321,83 @@ function shade(hex, amount) {
 /** Remove os prédios que terminaram de cair (chamado pelo loop de simulação). */
 export function pruneSkyline() {
     if (buildings.some(b => b.dead)) buildings = buildings.filter(b => !b.dead);
+}
+
+function drawDrones(w, groundY, scale, now) {
+    const dt = FRAME_MS;
+    for (const d of drones) {
+        d.x += d.vx * dt;
+        if (d.x > 1.1) d.x = -0.1;
+        if (d.x < -0.1) d.x = 1.1;
+
+        const px = d.x * w;
+        const py = d.y * groundY + Math.sin(now / 900 + d.x * 8) * 3 * scale;
+        const len = 20 * scale * (d.dir > 0 ? -1 : 1);
+
+        // Rastro de luz
+        const g = ctx.createLinearGradient(px, py, px + len, py);
+        g.addColorStop(0, d.color);
+        g.addColorStop(1, 'transparent');
+        ctx.strokeStyle = g;
+        ctx.lineWidth = Math.max(1, 1.2 * scale);
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + len, py);
+        ctx.stroke();
+
+        // Veículo com brilho
+        ctx.fillStyle = d.color;
+        ctx.beginPath();
+        ctx.arc(px, py, d.size * scale, 0, 6.283);
+        ctx.fill();
+    }
+}
+
+function drawShootingStar(w, groundY, now) {
+    if (!shootingStar && Math.random() < 0.008) {
+        shootingStar = {
+            x: rand(now) * 0.7 * w,
+            y: rand(now + 1) * 0.3 * groundY,
+            vx: 3.5 + rand(now + 2) * 3.5,
+            vy: 1.5 + rand(now + 3) * 2,
+            life: 1
+        };
+    }
+    if (shootingStar) {
+        shootingStar.x += shootingStar.vx;
+        shootingStar.y += shootingStar.vy;
+        shootingStar.life -= 0.035;
+        if (shootingStar.life <= 0) {
+            shootingStar = null;
+            return;
+        }
+        ctx.strokeStyle = `rgba(255, 255, 255, ${shootingStar.life * 0.9})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(shootingStar.x, shootingStar.y);
+        ctx.lineTo(shootingStar.x - shootingStar.vx * 5, shootingStar.y - shootingStar.vy * 5);
+        ctx.stroke();
+    }
+}
+
+function drawHoloBillboard(x, y, bw, scale, now, seed) {
+    const pulse = 0.6 + 0.4 * Math.sin(now / 450 + seed);
+    const colors = ['#00d4ff', '#ff00aa', '#00ff88', '#ffd700'];
+    const col = colors[Math.floor(Math.abs(seed * 10)) % colors.length];
+    const boardW = Math.min(bw * 0.75, 24 * scale);
+    const boardH = 8 * scale;
+    const bx = x + (bw - boardW) / 2;
+    const by = y - boardH - 2 * scale;
+
+    ctx.globalAlpha = pulse * 0.85;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, boardW, boardH);
+
+    ctx.fillStyle = col;
+    ctx.font = `bold ${Math.max(6, Math.floor(6.5 * scale))}px Orbitron, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$', bx + boardW / 2, by + boardH / 2);
+    ctx.globalAlpha = 1;
 }

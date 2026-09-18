@@ -37,11 +37,41 @@ body::before {
 }
 
 header {
-    background: rgba(10,12,24,0.85); backdrop-filter: blur(14px) saturate(140%);
-    padding: 10px 12px; border-bottom: 1px solid rgba(0,212,255,0.35);
+    background: rgba(10,12,24,0.88); backdrop-filter: blur(14px) saturate(140%);
+    padding: 8px 12px; border-bottom: 1px solid rgba(0,212,255,0.35);
     box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 0 rgba(0,212,255,0.15) inset;
-    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr;
-    gap: 10px; align-items: center; z-index: 100; overflow-x: auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; z-index: 100; overflow-x: auto;
+}
+
+.brand-chip {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    padding: 4px 8px; border-radius: 9px;
+    background: rgba(0, 212, 255, 0.07);
+    border: 1px solid rgba(0, 212, 255, 0.35);
+    transition: all 0.2s ease; flex-shrink: 0;
+}
+.brand-chip:hover {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: var(--primary);
+    box-shadow: 0 0 16px rgba(0, 212, 255, 0.35);
+    transform: translateY(-1px);
+}
+.brand-chip:active { transform: scale(0.96); }
+.brand-chip-img {
+    width: 28px; height: 28px; border-radius: 6px;
+    object-fit: cover; border: 1px solid rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+.brand-chip-info { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-chip-title {
+    font-family: 'Orbitron', monospace; font-weight: 900;
+    font-size: 10.5px; color: #fff; letter-spacing: 0.8px;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
+}
+.brand-chip-tag {
+    font-size: 7.5px; font-weight: 800; color: var(--gold);
+    letter-spacing: 1.2px; text-transform: uppercase; margin-top: 1px;
 }
 
 /* ===== ÍCONES =====
@@ -249,60 +279,88 @@ main > * { flex-shrink: 0; }
 }
 
 #clickButton {
-    width: clamp(104px, 30vw, 150px); height: clamp(104px, 30vw, 150px);
+    width: clamp(110px, 32vw, 158px); height: clamp(110px, 32vw, 158px);
     border-radius: 50%; cursor: pointer; position: relative; z-index: 2;
     display: grid; place-items: center;
-    font-size: clamp(38px, 9vw, 52px);
-    color: #04121c;
-    border: none;
-    background:
-        radial-gradient(circle at 50% 22%, rgba(255,255,255,0.65), transparent 52%),
-        linear-gradient(165deg, var(--primary) 0%, var(--secondary) 100%);
+    border: 3px solid rgba(0, 212, 255, 0.7);
+    background: url('../assets/images/coin.jpg') center/cover no-repeat;
     box-shadow:
-        0 14px 34px rgba(0,0,0,0.45),
-        0 0 0 1px rgba(255,255,255,0.18) inset,
-        0 -8px 18px rgba(0,60,90,0.35) inset,
-        0 0 34px rgba(0,212,255,0.28);
-    transition: transform 0.09s cubic-bezier(0.3,0,0.2,1), box-shadow 0.2s ease;
+        0 14px 34px rgba(0,0,0,0.65),
+        0 0 25px rgba(0,212,255,0.45),
+        0 0 50px rgba(255,215,0,0.25);
+    transition: transform 0.09s cubic-bezier(0.3,0,0.2,1), box-shadow 0.2s ease, filter 0.2s ease;
+    overflow: hidden;
 }
-#clickButton .icon { width: 0.94em; height: 0.94em; stroke-width: 1.45; }
 #clickButton:hover {
+    transform: scale(1.04);
+    border-color: var(--secondary);
     box-shadow:
-        0 14px 34px rgba(0,0,0,0.45),
-        0 0 0 1px rgba(255,255,255,0.28) inset,
-        0 -8px 18px rgba(0,60,90,0.35) inset,
-        0 0 52px rgba(0,212,255,0.5);
+        0 16px 42px rgba(0,0,0,0.7),
+        0 0 40px rgba(0,255,136,0.55),
+        0 0 70px rgba(0,212,255,0.45);
 }
-/* Afunda em vez de só encolher: o clique tem que dar sensação de toque. */
+/* Afunda com peso e sensação de clique físico */
 #clickButton:active {
-    transform: scale(0.955) translateY(2px);
+    transform: scale(0.93) translateY(3px);
     box-shadow:
-        0 6px 14px rgba(0,0,0,0.5),
-        0 0 0 1px rgba(255,255,255,0.14) inset,
-        0 -4px 12px rgba(0,60,90,0.4) inset,
-        0 0 26px rgba(0,212,255,0.35);
+        0 6px 16px rgba(0,0,0,0.75),
+        0 0 28px rgba(0,212,255,0.6);
+}
+
+/* Reflexo cintilante diagonal em varredura contínua */
+.coin-sheen {
+    position: absolute; inset: -50%;
+    background: linear-gradient(
+        105deg,
+        transparent 35%,
+        rgba(255, 255, 255, 0.45) 50%,
+        transparent 65%
+    );
+    transform: translateX(-100%) rotate(25deg);
+    animation: sheenSweep 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
+}
+@keyframes sheenSweep {
+    0%, 20% { transform: translateX(-120%) rotate(25deg); opacity: 0; }
+    25% { opacity: 1; }
+    40%, 100% { transform: translateX(120%) rotate(25deg); opacity: 0; }
 }
 
 /* Modo Febre: ativado quando combo >= 50 e o upgrade de febre estiver ativo */
 @keyframes feverPulse {
     0%, 100% {
-        box-shadow: 0 14px 34px rgba(0,0,0,0.5), 0 0 45px rgba(255, 102, 0, 0.75), 0 0 75px rgba(255, 51, 0, 0.45), inset 0 0 20px rgba(255, 200, 0, 0.6);
-        transform: scale(1.03);
+        box-shadow: 0 14px 34px rgba(0,0,0,0.6), 0 0 45px rgba(255, 102, 0, 0.85), 0 0 85px rgba(255, 51, 0, 0.6), inset 0 0 24px rgba(255, 200, 0, 0.7);
+        transform: scale(1.04);
     }
     50% {
-        box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 65px rgba(255, 51, 0, 0.95), 0 0 100px rgba(255, 153, 0, 0.65), inset 0 0 28px rgba(255, 230, 0, 0.85);
-        transform: scale(1.07);
+        box-shadow: 0 18px 44px rgba(0,0,0,0.7), 0 0 70px rgba(255, 51, 0, 0.95), 0 0 115px rgba(255, 153, 0, 0.75), inset 0 0 35px rgba(255, 230, 0, 0.9);
+        transform: scale(1.08);
     }
 }
 #clickButton.fever-active {
-    background:
-        radial-gradient(circle at 50% 22%, rgba(255,255,255,0.85), transparent 50%),
-        linear-gradient(165deg, #ff9900 0%, #ff3300 50%, #cc0000 100%);
-    animation: feverPulse 0.9s ease-in-out infinite;
-    color: #ffffff;
+    border-color: #ffaa00;
+    box-shadow:
+        0 14px 34px rgba(0,0,0,0.7),
+        0 0 50px rgba(255, 102, 0, 0.85),
+        0 0 90px rgba(255, 51, 0, 0.55);
+    animation: feverPulse 0.85s ease-in-out infinite, feverSaturate 2.5s ease-in-out infinite;
+}
+@keyframes feverSaturate {
+    0%, 100% { filter: saturate(1.4) contrast(1.15) brightness(1.1); }
+    50% { filter: saturate(1.9) contrast(1.25) brightness(1.25); }
 }
 #clickButton.fever-active:active {
-    transform: scale(0.98) translateY(2px);
+    transform: scale(0.96) translateY(3px);
+}
+
+.click-spark {
+    position: fixed; pointer-events: none; z-index: 510;
+    border-radius: 50%;
+    animation: sparkFly 0.55s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+@keyframes sparkFly {
+    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx, 20px), var(--ty, 20px)) scale(0.2); opacity: 0; }
 }
 
 .click-particle {
@@ -485,6 +543,92 @@ main > * { flex-shrink: 0; }
    Substituem os estilos inline que se repetiam na marcação. */
 .modal-wide { min-width: 280px; max-width: 460px; }
 .modal-hint { font-size: 10px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
+
+/* ===== MODAL HERO BANNER (Splash Art) ===== */
+.modal-with-hero { padding: 0 !important; overflow: hidden; }
+.modal-with-hero .info-body { padding: 14px 18px 18px; }
+.modal-with-hero .btn { margin: 0 18px 18px; width: calc(100% - 36px); }
+
+.modal-hero-banner {
+    position: relative; height: 135px;
+    overflow: hidden; display: flex; align-items: flex-end;
+    padding: 16px;
+}
+.modal-hero-bg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: center 25%;
+    transform: scale(1.04); filter: brightness(0.85);
+}
+.modal-hero-gradient {
+    position: absolute; inset: 0;
+    background: linear-gradient(0deg, rgba(15, 52, 96, 0.98) 12%, rgba(10, 15, 30, 0.5) 60%, rgba(0, 0, 0, 0.3) 100%);
+}
+.modal-hero-content {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; gap: 12px; width: 100%;
+}
+.modal-hero-content.center {
+    flex-direction: column; text-align: center; justify-content: center;
+}
+.modal-hero-logo {
+    width: 46px; height: 46px; border-radius: 10px;
+    border: 2px solid rgba(0, 212, 255, 0.6);
+    box-shadow: 0 0 16px rgba(0, 212, 255, 0.5);
+    object-fit: cover;
+}
+.modal-hero-text { display: flex; flex-direction: column; }
+.modal-hero-title {
+    font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 900;
+    color: #fff; letter-spacing: 1px;
+    text-shadow: 0 0 16px rgba(0, 212, 255, 0.7);
+}
+.modal-hero-sub {
+    font-size: 9.5px; color: var(--gold); font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Modal de Retorno Offline */
+.modal-offline-card {
+    max-width: 380px !important; padding: 0 !important;
+    overflow: hidden; text-align: center;
+}
+.modal-hero-offline {
+    height: 110px;
+    align-items: center; justify-content: center;
+}
+.modal-hero-icon { font-size: 32px; margin-bottom: 2px; }
+.modal-offline-body { padding: 16px 18px; }
+.offline-earnings-card {
+    background: rgba(0,255,136,0.06);
+    border: 1px solid rgba(0,255,136,0.35);
+    border-radius: 12px; padding: 14px; margin: 12px 0;
+    box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.05);
+}
+.offline-card-label {
+    font-size: 9.5px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700;
+}
+.offline-time-value {
+    font-size: 15px; font-weight: bold; margin: 3px 0 10px;
+    color: var(--text-primary);
+}
+.offline-earnings-value {
+    font-size: 28px; font-weight: 900; color: var(--secondary);
+    font-family: 'Orbitron', monospace; letter-spacing: -0.5px;
+    text-shadow: 0 0 18px rgba(0, 255, 136, 0.45);
+}
+.btn-collect {
+    width: 100%; background: linear-gradient(135deg, #00ff88, #00cc66);
+    color: #041f12 !important; font-weight: 800; font-size: 12.5px;
+    padding: 12px; border-radius: 9px; letter-spacing: 0.5px;
+    border: none; cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.35);
+}
+.btn-collect:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 26px rgba(0, 255, 136, 0.55);
+}
+.btn-collect:active { transform: scale(0.98); }
 .modal-scroll { max-height: 60vh; overflow-y: auto; }
 .info-body { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
 .info-block { margin-bottom: 12px; }
@@ -549,9 +693,11 @@ main > * { flex-shrink: 0; }
 
 @media (max-width: 600px) {
     header {
-        grid-template-columns: 1fr 1fr;
+        flex-wrap: wrap;
         padding: 7px 8px; gap: 6px;
     }
+    .brand-chip { padding: 3px 6px; }
+    .brand-chip-title { font-size: 9.5px; }
     .stat-box { padding: 5px 8px; border-radius: 6px; }
     .stat-label { font-size: 9px; }
     .stat-value { font-size: 14px; }

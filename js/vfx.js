@@ -73,8 +73,47 @@ function spawnAmbientMote() {
 let activeClickParticles = 0;
 const MAX_CLICK_PARTICLES = 25;
 
+function spawnClickSparks(x, y, isCrit) {
+    if (!pixiApp) return spawnClickSparksDOM(x, y, isCrit);
+    const count = isCrit ? 14 : 7;
+    const colors = isCrit ? [0xffd700, 0xffaa00, 0xffffff] : [0x00d4ff, 0x00ff88, 0xffd700];
+    const sparks = [];
+    for (let i = 0; i < count; i++) {
+        const g = new PIXI.Graphics();
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const r = isCrit ? 2.5 + Math.random() * 2 : 1.5 + Math.random() * 1.5;
+        g.circle(0, 0, r).fill(color);
+        g.x = x;
+        g.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * (isCrit ? 6 : 3.5);
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed - 1.5;
+        pixiApp.stage.addChild(g);
+        sparks.push({ g, vx, vy, gravity: 0.16 });
+    }
+    let elapsed = 0;
+    const duration = 650;
+    const tick = () => {
+        elapsed += pixiApp.ticker.deltaMS;
+        const t = Math.min(1, elapsed / duration);
+        sparks.forEach(s => {
+            s.g.x += s.vx;
+            s.g.y += s.vy;
+            s.vy += s.gravity;
+            s.g.alpha = Math.max(0, 1 - t);
+        });
+        if (elapsed >= duration) {
+            sparks.forEach(s => { pixiApp.stage.removeChild(s.g); s.g.destroy(); });
+            pixiApp.ticker.remove(tick);
+        }
+    };
+    pixiApp.ticker.add(tick);
+}
+
 export function spawnClickParticle(amount, x, y, isCrit = false) {
     if (typeof document === 'undefined') return;
+    spawnClickSparks(x, y, isCrit);
     if (activeClickParticles >= MAX_CLICK_PARTICLES && !isCrit) return;
 
     activeClickParticles++;
@@ -158,6 +197,32 @@ function spawnClickParticleDOM(amount, x, y, isCrit = false) {
         if (node.parentNode) node.remove();
         activeClickParticles = Math.max(0, activeClickParticles - 1);
     }, 900);
+}
+
+function spawnClickSparksDOM(x, y, isCrit) {
+    if (typeof document === 'undefined') return;
+    const count = isCrit ? 10 : 5;
+    const colors = isCrit ? ['#ffd700', '#ffaa00', '#ffffff'] : ['#00d4ff', '#00ff88', '#ffd700'];
+    for (let i = 0; i < count; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'click-spark';
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const size = isCrit ? 5 : 3;
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 25 + Math.random() * (isCrit ? 45 : 30);
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist;
+        spark.style.setProperty('--tx', `${tx}px`);
+        spark.style.setProperty('--ty', `${ty}px`);
+        spark.style.left = `${x}px`;
+        spark.style.top = `${y}px`;
+        spark.style.width = `${size}px`;
+        spark.style.height = `${size}px`;
+        spark.style.background = color;
+        spark.style.boxShadow = `0 0 6px ${color}`;
+        document.body.appendChild(spark);
+        setTimeout(() => { if (spark.parentNode) spark.remove(); }, 550);
+    }
 }
 
 function spawnConfettiDOM() {

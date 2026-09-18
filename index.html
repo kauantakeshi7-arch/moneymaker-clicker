@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="MoneyMaker — jogo clicker/incremental com prestígio infinito, gerentes, sinergias e eventos.">
-    <title>💎 MoneyMaker</title>
+    <meta name="theme-color" content="#0f3460">
+    <meta property="og:title" content="💎 MoneyMaker — Tycoon Incremental">
+    <meta property="og:description" content="Construa seu império financeiro, gerencie negócios e acumule fortunas infinitas!">
+    <meta property="og:image" content="assets/images/splash.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="assets/images/splash.jpg">
+    <title>💎 MoneyMaker — Tycoon Incremental</title>
+    <link rel="icon" type="image/jpeg" href="assets/images/logo.jpg">
     <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.17.1/pixi.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,6 +61,14 @@
 </svg>
 
 <header>
+    <div class="brand-chip" data-action="openModal" data-target="infoModal" title="Sobre o MoneyMaker" aria-label="Sobre o MoneyMaker">
+        <img src="assets/images/logo.jpg" alt="Logo MoneyMaker" class="brand-chip-img">
+        <div class="brand-chip-info">
+            <span class="brand-chip-title">MONEYMAKER</span>
+            <span class="brand-chip-tag">TYCOON</span>
+        </div>
+    </div>
+
     <div class="stat-box stat-primary">
         <div class="stat-label"><svg class="icon"><use href="#i-coins"/></svg>Dinheiro</div>
         <div class="stat-value" id="moneyDisplay">$0</div>
@@ -108,7 +123,7 @@
             <span class="click-ring click-ring-1"></span>
             <span class="click-ring click-ring-2"></span>
             <button id="clickButton" aria-label="Ganhar dinheiro">
-                <svg class="icon"><use href="#i-coins"/></svg>
+                <span class="coin-sheen"></span>
             </button>
         </div>
 
@@ -183,8 +198,18 @@
 </main>
 
 <div id="infoModal" class="modal">
-    <div class="modal-content modal-wide">
-        <h2>ℹ️ MoneyMaker</h2>
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash.jpg" alt="MoneyMaker Metropolis" class="modal-hero-bg">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <img src="assets/images/logo.jpg" alt="MoneyMaker Logo" class="modal-hero-logo">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title">MONEYMAKER</div>
+                    <div class="modal-hero-sub">Tycoon Incremental — Império Financeiro</div>
+                </div>
+            </div>
+        </div>
         <div class="info-body">
             <div class="info-block">
                 <strong>As duas moedas:</strong><br>
@@ -314,17 +339,25 @@
 </div>
 
 <div id="offlineModal" class="modal">
-    <div class="modal-content" style="max-width: 380px; text-align: center;">
-        <div style="font-size: 42px; margin-bottom: 8px;">🌙</div>
-        <h2>Relatório de Retorno</h2>
-        <div class="modal-hint">Seus negócios continuaram operando enquanto você esteve fora!</div>
-        <div style="background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.3); border-radius: 10px; padding: 14px; margin: 12px 0;">
-            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tempo Ausente</div>
-            <div id="offlineTime" style="font-size: 15px; font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">--</div>
-            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Lucros Arrecadados</div>
-            <div id="offlineEarnings" style="font-size: 26px; font-weight: 800; color: var(--secondary); font-family: 'Orbitron', monospace;">$0</div>
+    <div class="modal-content modal-offline-card">
+        <div class="modal-hero-banner modal-hero-offline">
+            <img src="assets/images/splash.jpg" alt="Metropolis" class="modal-hero-bg">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content center">
+                <div class="modal-hero-icon">🌙</div>
+                <div class="modal-hero-title">Relatório Executivo</div>
+            </div>
         </div>
-        <button class="btn" data-action="collectOffline" data-target="offlineModal" style="width: 100%; background: var(--secondary); color: #05140e; font-weight: bold; font-size: 12px; padding: 12px;">🎉 Coletar Lucros</button>
+        <div class="modal-offline-body">
+            <div class="modal-hint">Seus negócios continuaram operando no mercado global enquanto você esteve ausente!</div>
+            <div class="offline-earnings-card">
+                <div class="offline-card-label">Tempo Ausente</div>
+                <div id="offlineTime" class="offline-time-value">--</div>
+                <div class="offline-card-label">Lucros Arrecadados</div>
+                <div id="offlineEarnings" class="offline-earnings-value">$0</div>
+            </div>
+            <button class="btn btn-collect" data-action="collectOffline" data-target="offlineModal">🎉 Coletar Lucros</button>
+        </div>
     </div>
 </div>
 
