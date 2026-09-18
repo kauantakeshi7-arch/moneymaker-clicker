@@ -265,26 +265,48 @@
 </div>
 
 <div id="prestigeShopModal" class="modal">
-    <div class="modal-content modal-wide">
-        <h2>🛒 Loja de Prestígio</h2>
-        <div class="modal-hint">
-            Pontos: <span id="prestigePointsDisplay" style="color: var(--gold); font-weight: bold;">0</span>
-            — permanentes, nunca resetam. Quanto mais fundo você vai antes de prestigiar, mais ganha.
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash_prestige.jpg" alt="Loja de Prestígio Cósmica" class="modal-hero-bg">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title">🛒 LOJA DE PRESTÍGIO</div>
+                    <div class="modal-hero-sub">Joias cósmicas e bônus permanentes que nunca resetam</div>
+                </div>
+            </div>
         </div>
-        <div id="prestigeShopContainer" class="modal-scroll"></div>
-        <button class="btn" data-action="closeModal" data-target="prestigeShopModal" style="width: 100%; margin-top: 12px;">Fechar</button>
+        <div class="modal-body-pad">
+            <div class="modal-hint">
+                Pontos: <span id="prestigePointsDisplay" style="color: var(--gold); font-weight: bold;">0</span>
+                — permanentes. Quanto mais fundo você vai antes de prestigiar, mais ganha.
+            </div>
+            <div id="prestigeShopContainer" class="modal-scroll"></div>
+            <button class="btn" data-action="closeModal" data-target="prestigeShopModal">Fechar</button>
+        </div>
     </div>
 </div>
 
 <div id="upgradeShopModal" class="modal">
-    <div class="modal-content modal-wide">
-        <h2>⚡ Upgrades</h2>
-        <div class="modal-hint">
-            Comprados com dinheiro e <strong>resetam a cada prestígio</strong> — cada run é um build diferente.<br>
-            Disponível: <span id="upgradeShopMoney" style="color: var(--secondary); font-weight: bold;">$0</span>
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash_upgrades.jpg" alt="Laboratório de Pesquisa e Upgrades" class="modal-hero-bg">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title">⚡ UPGRADES & PESQUISA</div>
+                    <div class="modal-hero-sub">Tecnologias de mercado e otimização da run atual</div>
+                </div>
+            </div>
         </div>
-        <div id="upgradeShopContainer" class="modal-scroll"></div>
-        <button class="btn" data-action="closeModal" data-target="upgradeShopModal" style="width: 100%; margin-top: 12px;">Fechar</button>
+        <div class="modal-body-pad">
+            <div class="modal-hint">
+                Comprados com dinheiro e <strong>resetam a cada prestígio</strong> — cada run é um build diferente.<br>
+                Disponível: <span id="upgradeShopMoney" style="color: var(--secondary); font-weight: bold;">$0</span>
+            </div>
+            <div id="upgradeShopContainer" class="modal-scroll"></div>
+            <button class="btn" data-action="closeModal" data-target="upgradeShopModal">Fechar</button>
+        </div>
     </div>
 </div>
 
@@ -300,28 +322,47 @@
 </div>
 
 <div id="contractsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="contractsModalTitle">
-    <div class="modal-content modal-wide">
+    <div class="modal-content modal-wide modal-with-hero">
         <div class="modal-hero-banner">
-            <h2 id="contractsModalTitle">📄 Contratos Corporativos</h2>
-            <div class="modal-hero-sub">Metas operacionais e auditorias financeiras com bonificações imediatas</div>
+            <img src="assets/images/splash_contracts.jpg" alt="Sala de Diretoria de Contratos" class="modal-hero-bg">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title" id="contractsModalTitle">📄 CONTRATOS CORPORATIVOS</div>
+                    <div class="modal-hero-sub">Sala de diretoria, auditorias e acordos de alta liquidez</div>
+                </div>
+            </div>
         </div>
-        <div class="contracts-header-bar">
-            <span>Contratos Cumpridos: <strong id="contractsCountDisplay" style="color: var(--secondary); font-size: 1.15em;">0</strong></span>
-            <span style="font-size: 8.5px; color: var(--text-secondary);">⚡ Novos acordos gerados ao assinar</span>
+        <div class="modal-body-pad">
+            <div class="contracts-header-bar">
+                <span>Contratos Cumpridos: <strong id="contractsCountDisplay" style="color: var(--secondary); font-size: 1.15em;">0</strong></span>
+                <span style="font-size: 8.5px; color: var(--text-secondary);">⚡ Novos acordos gerados ao assinar</span>
+            </div>
+            <div id="contractsContainer" class="contracts-list"></div>
+            <button class="btn" data-action="closeModal" data-target="contractsModal">Fechar</button>
         </div>
-        <div id="contractsContainer" class="contracts-list"></div>
-        <button class="btn" data-action="closeModal" data-target="contractsModal" style="width: 100%; margin-top: 12px;">Fechar</button>
     </div>
 </div>
 
 <div id="achievementsModal" class="modal">
-    <div class="modal-content modal-wide">
-        <h2>🏆 Conquistas (<span id="achCount">0</span>/<span id="achTotal">0</span>)</h2>
-        <div style="font-size: 9px; color: var(--text-secondary); margin-bottom: 8px;">
-            Cada conquista desbloqueada dá +1% de multiplicador permanente
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash_achievements.jpg" alt="Galeria de Conquistas e Troféus" class="modal-hero-bg">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title">🏆 CONQUISTAS (<span id="achCount">0</span>/<span id="achTotal">0</span>)</div>
+                    <div class="modal-hero-sub">Panteão de glória dos maiores magnatas da história</div>
+                </div>
+            </div>
         </div>
-        <div id="achievementsContainer" class="modal-scroll"></div>
-        <button class="btn" data-action="closeModal" data-target="achievementsModal" style="width: 100%; margin-top: 12px;">Fechar</button>
+        <div class="modal-body-pad">
+            <div style="font-size: 9px; color: var(--text-secondary); margin-bottom: 8px;">
+                Cada conquista desbloqueada concede +1% de multiplicador permanente
+            </div>
+            <div id="achievementsContainer" class="modal-scroll"></div>
+            <button class="btn" data-action="closeModal" data-target="achievementsModal">Fechar</button>
+        </div>
     </div>
 </div>
 

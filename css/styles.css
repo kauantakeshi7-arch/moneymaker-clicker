@@ -654,6 +654,9 @@ main > * { flex-shrink: 0; }
 .modal-with-hero { padding: 0 !important; overflow: hidden; }
 .modal-with-hero .info-body { padding: 14px 18px 18px; }
 .modal-with-hero .btn { margin: 0 18px 18px; width: calc(100% - 36px); }
+.modal-body-pad { padding: 14px 18px 18px; }
+.modal-body-pad .btn { width: 100% !important; margin: 12px 0 0 0 !important; }
+.modal-body-pad .modal-scroll { max-height: 52vh; }
 
 .modal-hero-banner {
     position: relative; height: 135px;
