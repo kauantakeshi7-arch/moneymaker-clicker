@@ -70,13 +70,16 @@ export function createUpgradeButtons() {
         card.setAttribute('role', 'button');
         card.innerHTML = `
             <div class="upgrade-qty"></div>
-            <div class="upgrade-icon">${u.icon}</div>
+            <svg class="upgrade-icon"><use href="#${u.glyph}"/></svg>
             <div class="upgrade-name">${u.name}</div>
             <div class="upgrade-cost">${formatNumber(getUpgradeCost(i))}</div>
             <div class="upgrade-income">+${formatNumber(getUpgradeIncome(i))}/s</div>
             <div class="upgrade-count" style="display:none;"></div>
             <button class="manager-btn" title="Gerente automatiza a compra deste negócio"></button>
-            <div class="upgrade-lock-overlay"><div>🔒</div><div class="upgrade-lock"></div></div>
+            <div class="upgrade-lock-overlay">
+                <svg class="icon icon-lg"><use href="#i-lock"/></svg>
+                <div class="upgrade-lock"></div>
+            </div>
         `;
         card.addEventListener('click', (e) => {
             if (e.target.closest('.manager-btn')) return;
@@ -145,13 +148,14 @@ export function updateManagerButtons() {
     for (let i = 0; i < cardRefs.length; i++) {
         const btn = cardRefs[i].manager;
         if (!btn) continue;
+        const robot = '<svg class="icon"><use href="#i-robot"/></svg>';
         if (upgrades[i].manager) {
-            setText(btn, '🤖 Ativo');
+            setHtml(btn, `${robot}<span>Ativo</span>`);
             btn.classList.add('owned');
             btn.disabled = true;
         } else {
             const cost = getManagerCost(i);
-            setText(btn, `🤖 ${formatNumber(cost)}`);
+            setHtml(btn, `${robot}<span>${formatNumber(cost)}</span>`);
             btn.classList.remove('owned');
             btn.disabled = gameState.money < cost;
         }
@@ -422,7 +426,7 @@ export function updateDisplay() {
     }
 
     const canPrestige = gameState.totalEarned >= nextCost;
-    setText(el.prestigeBtn, canPrestige ? '⭐' : '🌙');
+    // Só o estado muda: o ícone e o rótulo do botão são fixos no HTML.
     el.prestigeBtn.disabled = !canPrestige;
     el.prestigeBtn.classList.toggle('ready', canPrestige);
 

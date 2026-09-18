@@ -10,14 +10,16 @@ export const MONEY_CAP = 1e300;  // sanidade contra Infinity; dinheiro é float,
 // ============ NEGÓCIOS ============
 // Payback base ~80s por unidade: tempo suficiente para a renda não financiar
 // a própria expansão instantaneamente (com 25s o DPS dobrava a cada poucos segundos).
+// `glyph` é o id do símbolo SVG usado no card (que fica sempre na tela);
+// `icon` é o emoji usado em listas de modal e avisos passageiros.
 export const upgrades = [
-    { name: 'Freelancer',         icon: '👤', baseIncome: 0.25,   baseCost: 20,       owned: 0, manager: false },
-    { name: 'Startup',            icon: '🏢', baseIncome: 2,      baseCost: 200,      owned: 0, manager: false },
-    { name: 'Corporação',         icon: '🏛️', baseIncome: 20,     baseCost: 2000,     owned: 0, manager: false },
-    { name: 'Multinacional',      icon: '🌍', baseIncome: 200,    baseCost: 20000,    owned: 0, manager: false },
-    { name: 'Gigante TI',         icon: '💻', baseIncome: 2000,   baseCost: 200000,   owned: 0, manager: false },
-    { name: 'Império Financeiro', icon: '💰', baseIncome: 20000,  baseCost: 2000000,  owned: 0, manager: false },
-    { name: 'Império Global',     icon: '👑', baseIncome: 200000, baseCost: 20000000, owned: 0, manager: false }
+    { name: 'Freelancer',         glyph: 'b-person', icon: '👤', baseIncome: 0.25,   baseCost: 20,       owned: 0, manager: false },
+    { name: 'Startup',            glyph: 'b-shop',   icon: '🏢', baseIncome: 2,      baseCost: 200,      owned: 0, manager: false },
+    { name: 'Corporação',         glyph: 'b-bank',   icon: '🏛️', baseIncome: 20,     baseCost: 2000,     owned: 0, manager: false },
+    { name: 'Multinacional',      glyph: 'b-globe',  icon: '🌍', baseIncome: 200,    baseCost: 20000,    owned: 0, manager: false },
+    { name: 'Gigante TI',         glyph: 'b-server', icon: '💻', baseIncome: 2000,   baseCost: 200000,   owned: 0, manager: false },
+    { name: 'Império Financeiro', glyph: 'b-vault',  icon: '💰', baseIncome: 20000,  baseCost: 2000000,  owned: 0, manager: false },
+    { name: 'Império Global',     glyph: 'b-crown',  icon: '👑', baseIncome: 200000, baseCost: 20000000, owned: 0, manager: false }
 ];
 
 // O custo precisa crescer mais rápido que os multiplicadores de renda somados.

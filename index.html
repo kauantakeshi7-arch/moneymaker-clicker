@@ -12,48 +12,103 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<!--
+  Sistema de ícones. Traço de 1.7 em grade 24×24, herdando currentColor: a
+  mesma forma serve em qualquer cor e tamanho sem virar imagem nova.
+  Regra: SVG na estrutura que fica sempre na tela; emoji só em listas densas
+  dentro de modais e em avisos passageiros, onde ajudam a varrer rápido.
+-->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <defs>
+    <g id="i-base" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  </defs>
+
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11.5v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17.5l5.5-5.5 3.5 3L20 7"/><path d="M15 7h5v5"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.5 4h9v5.5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 5.8H4.5v1.7a3 3 0 0 0 3 3"/><path d="M16.5 5.8h3v1.7a3 3 0 0 1-3 3"/><path d="M12 14v4.5"/><path d="M9 20h6"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.7 5.7 6.3.9-4.5 4.3 1.1 6.1L12 17.6l-5.6 2.9 1.1-6.1L3 10.1l6.3-.9z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.5 3L5.5 13.2h5.2L10 21l8.5-10.4h-5.4z"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9.5" cy="19.5" r="1.6"/><circle cx="17.5" cy="19.5" r="1.6"/><path d="M3 4.5h2.2l2.6 11h10.2l2.4-8H6.2"/></symbol>
+  <symbol id="i-ledger" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 8.5h8M8 12.5h8M8 16.5h5"/></symbol>
+  <symbol id="i-pie" viewBox="0 0 24 24"><path d="M12 3.2a8.8 8.8 0 1 0 8.8 8.8H12z"/><path d="M14.8 3.8A8.8 8.8 0 0 1 20.2 9.2h-5.4z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.4"/><path d="M12 2.6v2.8M12 18.6v2.8M2.6 12h2.8M18.6 12h2.8M5.3 5.3l2 2M16.7 16.7l2 2M18.7 5.3l-2 2M7.3 16.7l-2 2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.8" y="10.5" width="14.4" height="9.5" rx="2.2"/><path d="M8.2 10.5V7.2a3.8 3.8 0 0 1 7.6 0v3.3"/></symbol>
+  <symbol id="i-robot" viewBox="0 0 24 24"><rect x="3.8" y="8" width="16.4" height="11.2" rx="3.2"/><circle cx="9" cy="13.4" r="1.3" fill="currentColor" stroke="none"/><circle cx="15" cy="13.4" r="1.3" fill="currentColor" stroke="none"/><path d="M12 4.6V8"/><circle cx="12" cy="3.4" r="1.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></symbol>
+  <symbol id="i-gem" viewBox="0 0 24 24"><path d="M6.5 3.5h11l3.2 6-8.7 11-8.7-11z"/><path d="M2.8 9.5h18.4M9.8 3.5L7 9.5l5 11M14.2 3.5l2.8 6-5 11"/></symbol>
+  <symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="12" cy="6.3" rx="7.2" ry="3.1"/><path d="M4.8 6.3v5.2c0 1.7 3.2 3.1 7.2 3.1s7.2-1.4 7.2-3.1V6.3"/><path d="M4.8 11.5v5.2c0 1.7 3.2 3.1 7.2 3.1s7.2-1.4 7.2-3.1v-5.2"/></symbol>
+  <symbol id="i-cursor" viewBox="0 0 24 24"><path d="M6 3.5l11.5 7.6-5 1.4 2.6 5.6-2.4 1.1-2.6-5.6-4.1 3z"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 20.8c3.6 0 5.8-2.4 5.8-5.3 0-3.5-3-5.3-4.1-8.3-1.3 1.3-1.1 3.3-1.1 3.3s-1.6-2.8-2.5-4.7c-2 2.2-3.9 4.3-3.9 9.7 0 2.9 2.2 5.3 5.8 5.3z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3.5V9h-5.5"/></symbol>
+
+  <!-- Negócios: a silhueta cresce de uma pessoa até uma coroa, para a
+       progressão de escala ser legível antes de ler o nome. -->
+  <symbol id="b-person" viewBox="0 0 24 24"><circle cx="12" cy="7.6" r="3.6"/><path d="M4.8 20.2c0-3.9 3.2-6.6 7.2-6.6s7.2 2.7 7.2 6.6"/></symbol>
+  <symbol id="b-shop" viewBox="0 0 24 24"><path d="M3.8 9.2L5.4 4.6h13.2l1.6 4.6"/><path d="M5.2 9.2v10.6h13.6V9.2"/><path d="M9.8 19.8v-5.6h4.4v5.6"/></symbol>
+  <symbol id="b-bank" viewBox="0 0 24 24"><path d="M2.8 9.4L12 4.2l9.2 5.2"/><path d="M5.4 9.4v8.4M9.8 9.4v8.4M14.2 9.4v8.4M18.6 9.4v8.4"/><path d="M3.2 19.8h17.6"/></symbol>
+  <symbol id="b-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4"/><path d="M3.6 12h16.8"/><path d="M12 3.6c2.4 2.5 3.7 5.5 3.7 8.4s-1.3 5.9-3.7 8.4c-2.4-2.5-3.7-5.5-3.7-8.4S9.6 6.1 12 3.6z"/></symbol>
+  <symbol id="b-server" viewBox="0 0 24 24"><rect x="3.4" y="4" width="17.2" height="6" rx="1.8"/><rect x="3.4" y="14" width="17.2" height="6" rx="1.8"/><path d="M7 7h.01M7 17h.01"/><circle cx="7" cy="7" r=".9" fill="currentColor" stroke="none"/><circle cx="7" cy="17" r=".9" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="b-vault" viewBox="0 0 24 24"><rect x="3.4" y="4.2" width="17.2" height="15.6" rx="2.2"/><circle cx="12" cy="12" r="4.2"/><path d="M12 7.8V5.6M12 18.4v-2.2M7.8 12H5.6M18.4 12h-2.2"/></symbol>
+  <symbol id="b-crown" viewBox="0 0 24 24"><path d="M3 7.8l3.8 4.4L12 4.6l5.2 7.6L21 7.8l-1.9 10.6H4.9z"/><path d="M5.6 20.4h12.8"/></symbol>
+</svg>
+
 <header>
-    <div class="stat-box">
-        <div class="stat-label">💰 Dinheiro</div>
+    <div class="stat-box stat-primary">
+        <div class="stat-label"><svg class="icon"><use href="#i-coins"/></svg>Dinheiro</div>
         <div class="stat-value" id="moneyDisplay">$0</div>
     </div>
-    
+
     <div class="stat-box">
-        <div class="stat-label">📊 DPS</div>
+        <div class="stat-label"><svg class="icon"><use href="#i-trend"/></svg>Renda</div>
         <div class="stat-value green" id="mpsDisplay">+$0</div>
     </div>
-    
+
     <div class="stat-box">
-        <div class="stat-label">⭐ Prestígio</div>
+        <div class="stat-label"><svg class="icon"><use href="#i-star"/></svg>Prestígio</div>
         <div class="stat-value gold" id="prestigeDisplay">0</div>
     </div>
-    
+
     <div class="stat-box">
-        <div class="stat-label">🎯 Próximo</div>
-        <div class="stat-value warning" id="timeToPrestige">--</div>
+        <div class="stat-label"><svg class="icon"><use href="#i-target"/></svg>Próximo</div>
+        <div class="stat-value muted" id="timeToPrestige">--</div>
     </div>
-    
-    <div style="display: flex; gap: 4px; position: relative;">
-        <button class="btn" data-action="openModal" data-target="infoModal" style="padding: 6px 8px;">ℹ️</button>
-        <button class="btn" data-action="toggleChart" style="padding: 6px 8px;">📈</button>
-        <button class="btn" data-action="openModal" data-target="achievementsModal" style="padding: 6px 8px; position: relative;">
-            🏆<span class="ach-badge" id="achBadge" style="display:none;">0</span>
+
+    <div class="header-actions">
+        <button class="icon-btn" data-action="openModal" data-target="infoModal" title="Como jogar" aria-label="Como jogar">
+            <svg class="icon"><use href="#i-info"/></svg>
+        </button>
+        <button class="icon-btn" data-action="toggleChart" title="Histórico de renda" aria-label="Histórico de renda">
+            <svg class="icon"><use href="#i-trend"/></svg>
+        </button>
+        <button class="icon-btn" data-action="openModal" data-target="achievementsModal" title="Conquistas" aria-label="Conquistas">
+            <svg class="icon"><use href="#i-trophy"/></svg>
+            <span class="badge" id="achBadge" style="display:none;">0</span>
         </button>
     </div>
 </header>
 
 <main>
     <div class="click-section">
-        <div style="text-align: center;">
-            <div style="font-size: 10px; color: var(--text-secondary);">💵 Total Ganho</div>
-            <div id="totalEarned" style="font-size: clamp(16px, 2.5vw, 22px); color: var(--accent);">$0</div>
+        <div class="total-earned">
+            <div class="total-earned-label">Total acumulado</div>
+            <div id="totalEarned" class="total-earned-value">$0</div>
         </div>
+
         <div class="click-btn-wrap">
-            <button id="clickButton">💰</button>
+            <span class="click-ring click-ring-1"></span>
+            <span class="click-ring click-ring-2"></span>
+            <button id="clickButton" aria-label="Ganhar dinheiro">
+                <svg class="icon"><use href="#i-coins"/></svg>
+            </button>
         </div>
-        <div style="font-size: 9px; color: var(--text-secondary);">
-            🖱️ <span id="clickCount">0</span> | 🔥 ×<span id="comboDisplay">1</span>
+
+        <div class="click-meta">
+            <span><svg class="icon"><use href="#i-cursor"/></svg><span id="clickCount">0</span></span>
+            <span class="click-meta-sep"></span>
+            <span><svg class="icon"><use href="#i-flame"/></svg>×<span id="comboDisplay">1</span></span>
         </div>
+
         <div class="prestige-progress-wrap">
             <div class="prestige-progress-bar"><div class="prestige-progress-fill" id="prestigeProgressFill"></div></div>
             <div class="prestige-progress-label" id="prestigeProgressLabel">Progresso para o próximo prestígio</div>
@@ -93,17 +148,28 @@
         <canvas id="progressChart"></canvas>
     </div>
     
+    <!-- Rotulados: seis ícones sozinhos não diziam qual era qual. -->
     <div class="controls">
-        <button class="btn btn-prestige" id="prestigeBtn" data-action="prestige" disabled>⭐</button>
-        <button class="btn" data-action="openModal" data-target="upgradeShopModal" style="position: relative;">
-            ⚡<span class="ach-badge" id="upgradeBadge" style="display:none; background: var(--secondary);">0</span>
+        <button class="tool-btn tool-prestige" id="prestigeBtn" data-action="prestige" disabled>
+            <svg class="icon"><use href="#i-star"/></svg><span>Prestígio</span>
         </button>
-        <button class="btn" data-action="openModal" data-target="prestigeShopModal" style="position: relative;">
-            🛒<span class="ach-badge" id="prestigePointBadge" style="display:none;">0</span>
+        <button class="tool-btn" data-action="openModal" data-target="upgradeShopModal">
+            <svg class="icon"><use href="#i-bolt"/></svg><span>Upgrades</span>
+            <span class="badge badge-green" id="upgradeBadge" style="display:none;">0</span>
         </button>
-        <button class="btn" data-action="openModal" data-target="economyModal">💹</button>
-        <button class="btn" data-action="openModal" data-target="statsModal">📊</button>
-        <button class="btn" data-action="openModal" data-target="settingsModal">⚙️</button>
+        <button class="tool-btn" data-action="openModal" data-target="prestigeShopModal">
+            <svg class="icon"><use href="#i-cart"/></svg><span>Loja</span>
+            <span class="badge" id="prestigePointBadge" style="display:none;">0</span>
+        </button>
+        <button class="tool-btn" data-action="openModal" data-target="economyModal">
+            <svg class="icon"><use href="#i-ledger"/></svg><span>Economia</span>
+        </button>
+        <button class="tool-btn" data-action="openModal" data-target="statsModal">
+            <svg class="icon"><use href="#i-pie"/></svg><span>Stats</span>
+        </button>
+        <button class="tool-btn" data-action="openModal" data-target="settingsModal">
+            <svg class="icon"><use href="#i-gear"/></svg><span>Ajustes</span>
+        </button>
     </div>
 </main>
 
