@@ -10,7 +10,7 @@ import {
     COMBO_TIMEOUT_MS, totalOwned
 } from '../js/config.js';
 import { gameState } from '../js/state.js';
-import { formatNumber } from '../js/utils.js';
+import { formatNumber, setNotationMode } from '../js/utils.js';
 import {
     addMoney, getRawDPS, getClickValue, getUpgradeCost, getUpgradeIncome,
     getBulkCost, getMaxAffordable, getBestBuyIndex, isBusinessUnlocked,
@@ -340,6 +340,23 @@ test('contagem total de negócios bate com a soma', () => {
     upgrades[0].owned = 3;
     upgrades[3].owned = 4;
     assert(totalOwned() === 7, 'soma errada', totalOwned());
+});
+
+test('modo de notação científica altera a exibição de grandes valores', () => {
+    setNotationMode('scientific');
+    assert(formatNumber(1500000) === '$1.50e+6', 'notação científica falhou: ' + formatNumber(1500000));
+    setNotationMode('standard');
+    assert(formatNumber(1500000) === '$1.50M', 'retorno ao padrão falhou: ' + formatNumber(1500000));
+});
+
+test('modo febre só ativa se o upgrade estiver comprado e combo >= 50', () => {
+    reset();
+    gameState.combo = 50;
+    assert(!isFeverActive(), 'modo febre não pode ativar sem o upgrade');
+    gameState.runUpgrades.push('util_fever');
+    assert(isFeverActive(), 'modo febre deve ativar com upgrade e combo 50');
+    gameState.combo = 49;
+    assert(!isFeverActive(), 'modo febre deve desativar abaixo de 50');
 });
 
 /** Roda tudo e devolve o relatório. */

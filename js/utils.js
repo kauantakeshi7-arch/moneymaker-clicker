@@ -2,12 +2,19 @@
 
 const NUMBER_SUFFIXES = ['', 'k', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc', 'Ud', 'Dd', 'Td'];
 
+let notationMode = 'standard';
+export function setNotationMode(mode) { notationMode = mode === 'scientific' ? 'scientific' : 'standard'; }
+
 export function formatNumber(n) {
     if (!Number.isFinite(n) || n < 0) return '$0';
     // Valores pequenos precisam de decimais: no início do jogo a renda é
     // fracionária (0,25/s) e arredondar fazia tudo aparecer como "$0".
     if (n > 0 && n < 100) return '$' + (+n.toFixed(2)).toString();
     if (n < 1000) return '$' + Math.floor(n);
+
+    if (notationMode === 'scientific') {
+        return '$' + n.toExponential(2);
+    }
 
     let tier = Math.min(NUMBER_SUFFIXES.length - 1, Math.floor(Math.log10(n) / 3));
     let scaled = n / Math.pow(1000, tier);
@@ -19,10 +26,17 @@ export function formatNumber(n) {
     return '$' + scaled.toFixed(2) + NUMBER_SUFFIXES[tier];
 }
 
-// O estado do som fica aqui como flag: assim este módulo não precisa conhecer
-// o DOM nem a checkbox que o controla.
+// O estado do som e vibração ficam aqui como flags desacopladas do DOM.
 let soundEnabled = true;
 export function setSoundEnabled(value) { soundEnabled = !!value; }
+
+let hapticsEnabled = true;
+export function setHapticsEnabled(value) { hapticsEnabled = !!value; }
+
+export function vibrate(pattern = 10) {
+    if (!hapticsEnabled || typeof navigator === 'undefined' || !navigator.vibrate) return;
+    try { navigator.vibrate(pattern); } catch (e) {}
+}
 
 // Singleton de AudioContext reutilizável: evita estourar o limite de contextos do navegador
 let audioCtx = null;
@@ -53,6 +67,90 @@ export function playSound(freq = 800, duration = 100) {
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + duration / 1000);
     } catch (e) { /* autoplay bloqueado ou sem AudioContext */ }
+}
+
+/** Clique com frequência que escala dinamicamente com o combo do jogador */
+export function playClickSound(combo = 1) {
+    const pitch = 520 + Math.min(Math.floor(combo) * 14, 1100);
+    playSound(pitch, 65);
+    vibrate(8);
+}
+
+/** Som bitonal característico de compra/caixa registradora */
+export function playCashSound() {
+    if (!soundEnabled || typeof window === 'undefined') {
+        vibrate(20);
+        return;
+    }
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        [784, 1046].forEach((f, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = f;
+            const start = ctx.currentTime + idx * 0.04;
+            gain.gain.setValueAtTime(0.08, start);
+            gain.gain.exponentialRampToValueAtTime(0.005, start + 0.12);
+            osc.start(start);
+            osc.stop(start + 0.12);
+        });
+        vibrate(22);
+    } catch (e) { playSound(1200, 100); }
+}
+
+/** Arpeggio cintilante para cliques críticos */
+export function playCritSound() {
+    if (!soundEnabled || typeof window === 'undefined') {
+        vibrate([15, 30, 25]);
+        return;
+    }
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        [1318, 1760, 2093].forEach((f, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'triangle';
+            osc.frequency.value = f;
+            const start = ctx.currentTime + idx * 0.05;
+            gain.gain.setValueAtTime(0.12, start);
+            gain.gain.exponentialRampToValueAtTime(0.005, start + 0.15);
+            osc.start(start);
+            osc.stop(start + 0.15);
+        });
+        vibrate([15, 30, 25]);
+    } catch (e) { playSound(2600, 180); }
+}
+
+/** Acorde maior triunfal ao prestigiar */
+export function playPrestigeSound() {
+    if (!soundEnabled || typeof window === 'undefined') {
+        vibrate([40, 60, 100]);
+        return;
+    }
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        [523, 659, 784, 1046].forEach((f, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = f;
+            const start = ctx.currentTime + idx * 0.07;
+            gain.gain.setValueAtTime(0.14, start);
+            gain.gain.exponentialRampToValueAtTime(0.005, start + 0.35);
+            osc.start(start);
+            osc.stop(start + 0.35);
+        });
+        vibrate([40, 60, 100]);
+    } catch (e) { playSound(2000, 200); }
 }
 
 /** Faixa central para acontecimentos grandes — um toast de canto não dá conta. */

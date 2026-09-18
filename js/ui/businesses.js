@@ -2,7 +2,7 @@
 
 import { upgrades } from '../config.js';
 import { gameState } from '../state.js';
-import { formatNumber, playSound, showBanner, shockwave, showNotification } from '../utils.js';
+import { formatNumber, playSound, playCashSound, showBanner, shockwave, showNotification } from '../utils.js';
 import { spawnConfetti } from '../vfx.js';
 import {
     getUpgradeCost, getUpgradeIncome, getUpgradeMilestoneMult,
@@ -112,7 +112,7 @@ export function buyUpgrade(idx, e) {
     } else {
         // Compra rotineira não vira aviso: o card atualiza e o prédio sobe no
         // cenário. Empilhar um toast por clique só virava ruído.
-        playSound(1200, 100);
+        playCashSound();
     }
 }
 
@@ -123,7 +123,7 @@ export function buyManager(idx) {
         gameState.money -= cost;
         upgrades[idx].manager = true;
         showNotification(`Gerente de ${upgrades[idx].name} contratado! Automação ativa.`, '🤖', 3000);
-        playSound(1600, 150);
+        playCashSound();
         updateManagerButtons();
     }
 }

@@ -284,17 +284,47 @@
                 🔊 Som
             </label>
             <label class="setting-row">
+                <input type="checkbox" id="hapticsToggle" checked>
+                📳 Vibração Háptica
+            </label>
+            <label class="setting-row">
+                <input type="checkbox" id="notationToggle">
+                🔬 Notação Científica ($1.00e6)
+            </label>
+            <label class="setting-row">
                 <input type="checkbox" id="aiToggle" checked>
                 🤖 Automação (só negócios com Gerente contratado)
             </label>
             <div class="settings-group">
-                <button class="btn" data-action="exportSave" style="width: 100%; margin-bottom: 6px; font-size: 10px;">💾 Exportar</button>
-                <button class="btn" data-action="importSave" style="width: 100%; margin-bottom: 6px; font-size: 10px;">📤 Importar</button>
+                <div style="font-size: 9px; color: var(--text-secondary); margin-bottom: 4px;">Gerenciamento de Save</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                    <button class="btn" data-action="copySave" style="font-size: 10px;">📋 Copiar Código</button>
+                    <button class="btn" data-action="importSaveText" style="font-size: 10px;">📥 Colar Código</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+                    <button class="btn" data-action="exportSave" style="font-size: 10px;">💾 Baixar .txt</button>
+                    <button class="btn" data-action="importSave" style="font-size: 10px;">📤 Subir .txt</button>
+                </div>
             </div>
-            <button class="btn" data-action="resetGame" style="width: 100%; color: var(--danger); font-size: 10px;">🔄 Reset</button>
+            <button class="btn" data-action="resetGame" style="width: 100%; color: var(--danger); font-size: 10px;">🔄 Resetar Run Atual</button>
             <button class="btn" data-action="closeModal" data-target="settingsModal" style="width: 100%; margin-top: 10px; font-size: 10px;">Fechar</button>
         </div>
         <input type="file" id="importInput" style="display:none;" accept=".txt">
+    </div>
+</div>
+
+<div id="offlineModal" class="modal">
+    <div class="modal-content" style="max-width: 380px; text-align: center;">
+        <div style="font-size: 42px; margin-bottom: 8px;">🌙</div>
+        <h2>Relatório de Retorno</h2>
+        <div class="modal-hint">Seus negócios continuaram operando enquanto você esteve fora!</div>
+        <div style="background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.3); border-radius: 10px; padding: 14px; margin: 12px 0;">
+            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tempo Ausente</div>
+            <div id="offlineTime" style="font-size: 15px; font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">--</div>
+            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Lucros Arrecadados</div>
+            <div id="offlineEarnings" style="font-size: 26px; font-weight: 800; color: var(--secondary); font-family: 'Orbitron', monospace;">$0</div>
+        </div>
+        <button class="btn" data-action="collectOffline" data-target="offlineModal" style="width: 100%; background: var(--secondary); color: #05140e; font-weight: bold; font-size: 12px; padding: 12px;">🎉 Coletar Lucros</button>
     </div>
 </div>
 

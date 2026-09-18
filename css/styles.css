@@ -283,6 +283,28 @@ main > * { flex-shrink: 0; }
         0 0 26px rgba(0,212,255,0.35);
 }
 
+/* Modo Febre: ativado quando combo >= 50 e o upgrade de febre estiver ativo */
+@keyframes feverPulse {
+    0%, 100% {
+        box-shadow: 0 14px 34px rgba(0,0,0,0.5), 0 0 45px rgba(255, 102, 0, 0.75), 0 0 75px rgba(255, 51, 0, 0.45), inset 0 0 20px rgba(255, 200, 0, 0.6);
+        transform: scale(1.03);
+    }
+    50% {
+        box-shadow: 0 16px 40px rgba(0,0,0,0.55), 0 0 65px rgba(255, 51, 0, 0.95), 0 0 100px rgba(255, 153, 0, 0.65), inset 0 0 28px rgba(255, 230, 0, 0.85);
+        transform: scale(1.07);
+    }
+}
+#clickButton.fever-active {
+    background:
+        radial-gradient(circle at 50% 22%, rgba(255,255,255,0.85), transparent 50%),
+        linear-gradient(165deg, #ff9900 0%, #ff3300 50%, #cc0000 100%);
+    animation: feverPulse 0.9s ease-in-out infinite;
+    color: #ffffff;
+}
+#clickButton.fever-active:active {
+    transform: scale(0.98) translateY(2px);
+}
+
 .click-particle {
     position: fixed; pointer-events: none; z-index: 500;
     font-family: 'Orbitron', monospace; font-weight: 800; font-size: 15px;

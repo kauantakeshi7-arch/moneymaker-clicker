@@ -20,10 +20,10 @@ npx serve .
 http://localhost:3000/tests/
 ```
 
-26 casos de regressão sobre os mesmos módulos do jogo. Cada um nasceu de um
+30 casos de regressão sobre os mesmos módulos do jogo. Cada um nasceu de um
 bug real que passou despercebido — renda fracionária zerada, combo vazando
-para a renda passiva, sinergia sem teto, prestígio saindo de graça. Rode antes
-de qualquer mudança em economia ou persistência.
+para a renda passiva, sinergia sem teto, prestígio saindo de graça, formatação
+científica e modo febre. Rode antes de qualquer mudança em economia ou persistência.
 
 ## Onde mexer
 

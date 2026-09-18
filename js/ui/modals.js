@@ -222,6 +222,53 @@ export function exportSave() {
     } catch (e) { alert('Erro!'); }
 }
 
+export function copySaveToClipboard() {
+    try {
+        const data = localStorage.getItem(SAVE_KEY);
+        if (!data) { showNotification('Nenhum save encontrado!', '❌'); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(data).then(() => {
+                showNotification('Save copiado para a área de transferência!', '📋');
+            }).catch(() => {
+                prompt('Copie o código do seu save:', data);
+            });
+        } else {
+            prompt('Copie o código do seu save:', data);
+        }
+    } catch (e) {
+        showNotification('Erro ao copiar save', '❌');
+    }
+}
+
+export function importSaveFromText() {
+    const raw = prompt('Cole o código do seu save aqui:');
+    if (!raw || raw.trim().length < 10) return;
+    try {
+        const parsed = JSON.parse(raw.trim());
+        if (!gameState.isValidSaveShape(parsed)) throw new Error('Formato inválido');
+        localStorage.setItem(SAVE_KEY, raw.trim());
+        showNotification('Save restaurado com sucesso!', '✅');
+        setTimeout(() => location.reload(), 400);
+    } catch (e) {
+        alert('Save inválido ou corrompido!');
+    }
+}
+
+export function showOfflineModal(offline) {
+    if (!offline || offline.earnings <= 0) return;
+    const timeNode = document.getElementById('offlineTime');
+    const earningsNode = document.getElementById('offlineEarnings');
+    if (timeNode && earningsNode) {
+        const t = offline.seconds < 3600
+            ? Math.floor(offline.seconds / 60) + ' minuto(s)'
+            : (offline.seconds / 3600).toFixed(1) + ' hora(s)';
+        timeNode.textContent = t;
+        earningsNode.textContent = '+' + formatNumber(offline.earnings);
+        openModal('offlineModal');
+        spawnConfetti();
+    }
+}
+
 export function resetGame() {
     if (!confirm('Reiniciar a run atual? Você mantém prestígio, pontos 💎 e conquistas.')) return;
     gameState.clickCount = 0;

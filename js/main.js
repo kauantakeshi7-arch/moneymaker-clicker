@@ -2,12 +2,16 @@
 
 import { SAVE_KEY, COMBO_TIMEOUT_MS } from './config.js';
 import { gameState } from './state.js';
-import { formatNumber, showNotification, playSound, setSoundEnabled, showBanner, shockwave } from './utils.js';
-import { initPixiEngine, spawnClickParticle } from './vfx.js';
+import {
+    formatNumber, showNotification, playSound, setSoundEnabled, showBanner, shockwave,
+    playClickSound, playCashSound, playCritSound, playPrestigeSound,
+    setNotationMode, setHapticsEnabled
+} from './utils.js';
+import { initPixiEngine, spawnClickParticle, spawnConfetti } from './vfx.js';
 import {
     addMoney, getClickValue, getCritChance, getCritMultiplier, getRawDPS,
     getRunEffectValue, prestige, runAI, checkAchievements, spawnGoldenEvent,
-    applyOfflineProgress, setAutomationEnabled, getEffectiveMultiplier
+    applyOfflineProgress, setAutomationEnabled, getEffectiveMultiplier, isFeverActive
 } from './economy.js';
 import { el, cacheDomRefs } from './ui/dom.js';
 import { createUpgradeButtons, setBulkMode } from './ui/businesses.js';
@@ -15,7 +19,8 @@ import { updateDisplay, resetUnlockTracking } from './ui/hud.js';
 import { initChart, recordChartSample, toggleChart } from './ui/chart.js';
 import {
     openModal, closeModal, exportSave, resetGame,
-    buyMoneyUpgrade, buyPrestigeShopItem
+    buyMoneyUpgrade, buyPrestigeShopItem,
+    copySaveToClipboard, importSaveFromText, showOfflineModal
 } from './ui/modals.js';
 import { initSkyline, syncSkyline, drawSkyline, pruneSkyline } from './skyline.js';
 
@@ -40,6 +45,7 @@ function doPrestige() {
         syncSkyline();
     });
     if (gameState.prestigeLevel > before) {
+        playPrestigeSound();
         shockwave('#ffd700');
         showBanner('Renascimento', `Prestígio ${gameState.prestigeLevel}`,
             `Multiplicador ×${getEffectiveMultiplier().toFixed(2)} — a cidade recomeça`, true);
@@ -56,6 +62,13 @@ const ACTIONS = {
     buyPrestige: target => buyPrestigeShopItem(target),
     exportSave,
     importSave: () => (el.importInput || document.getElementById('importInput')).click(),
+    copySave: copySaveToClipboard,
+    importSaveText: importSaveFromText,
+    collectOffline: () => {
+        closeModal('offlineModal');
+        spawnConfetti();
+        playCashSound();
+    },
     resetGame
 };
 
@@ -80,7 +93,11 @@ function handleMainClick(e) {
     addMoney(isCrit ? base * getCritMultiplier() : base, true);
 
     spawnClickParticle(gameState.money - before, e.clientX, e.clientY - 20, isCrit);
-    if (isCrit) playSound(2600, 180);
+    if (isCrit) {
+        playCritSound();
+    } else {
+        playClickSound(gameState.combo);
+    }
 }
 
 // ============ TECLADO ============
@@ -137,10 +154,18 @@ function init() {
     // Preferências ficam fora do save do jogo: são do dispositivo, não da partida.
     const soundOn = localStorage.getItem('soundEnabled') !== 'false';
     const autoOn = localStorage.getItem('aiEnabled') !== 'false';
+    const hapticsOn = localStorage.getItem('hapticsEnabled') !== 'false';
+    const notationPref = localStorage.getItem('notation') || 'standard';
+
     el.soundToggle.checked = soundOn;
     el.aiToggle.checked = autoOn;
+    if (el.hapticsToggle) el.hapticsToggle.checked = hapticsOn;
+    if (el.notationToggle) el.notationToggle.checked = notationPref === 'scientific';
+
     setSoundEnabled(soundOn);
     setAutomationEnabled(autoOn);
+    setHapticsEnabled(hapticsOn);
+    setNotationMode(notationPref);
 
     el.soundToggle.addEventListener('change', (e) => {
         localStorage.setItem('soundEnabled', e.target.checked);
@@ -150,6 +175,20 @@ function init() {
         localStorage.setItem('aiEnabled', e.target.checked);
         setAutomationEnabled(e.target.checked);
     });
+    if (el.hapticsToggle) {
+        el.hapticsToggle.addEventListener('change', (e) => {
+            localStorage.setItem('hapticsEnabled', e.target.checked);
+            setHapticsEnabled(e.target.checked);
+        });
+    }
+    if (el.notationToggle) {
+        el.notationToggle.addEventListener('change', (e) => {
+            const mode = e.target.checked ? 'scientific' : 'standard';
+            localStorage.setItem('notation', mode);
+            setNotationMode(mode);
+            updateDisplay();
+        });
+    }
     el.clickButton.addEventListener('click', handleMainClick);
     el.importInput.addEventListener('change', handleSaveImport);
 
@@ -167,10 +206,12 @@ function init() {
 
     const offline = applyOfflineProgress(lastSaveTime);
     if (offline.earnings > 0) {
-        const t = offline.seconds < 3600
-            ? Math.floor(offline.seconds / 60) + 'm'
-            : (offline.seconds / 3600).toFixed(1) + 'h';
-        showNotification(`Bem-vindo de volta! +${formatNumber(offline.earnings)} (${t} offline)`, '🌙', 6000);
+        if (offline.seconds >= 60) {
+            showOfflineModal(offline);
+        } else {
+            const t = Math.floor(offline.seconds) + 's';
+            showNotification(`Bem-vindo de volta! +${formatNumber(offline.earnings)} (${t} offline)`, '🌙', 4000);
+        }
     }
 
     setInterval(simulationTick, SIM_INTERVAL_MS);
@@ -253,6 +294,9 @@ function tickGoldenEvents(deltaMs) {
 
 function renderLoop(now) {
     updateDisplay();
+    if (el.clickButton) {
+        el.clickButton.classList.toggle('fever-active', isFeverActive());
+    }
     drawSkyline(now || performance.now());
     requestAnimationFrame(renderLoop);
 }
