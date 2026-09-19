@@ -243,7 +243,7 @@ export function renderTechMatrixUI() {
                 statusBadge = 'DISPONÍVEL';
             } else if (reqMet) {
                 statusClass = 'affordable-wait';
-                statusBadge = `$${formatNumber(node.cost)}`;
+                statusBadge = `${formatNumber(node.cost)}`;
             }
 
             html += `
@@ -254,7 +254,7 @@ export function renderTechMatrixUI() {
                         <div class="tech-node-desc">${node.desc}</div>
                         <div class="tech-node-footer">
                             <span class="tech-node-badge ${statusClass}">${statusBadge}</span>
-                            ${!isUnlocked ? `<span class="tech-node-cost">$${formatNumber(node.cost)}</span>` : ''}
+                            ${!isUnlocked ? `<span class="tech-node-cost">${formatNumber(node.cost)}</span>` : ''}
                         </div>
                     </div>
                 </div>

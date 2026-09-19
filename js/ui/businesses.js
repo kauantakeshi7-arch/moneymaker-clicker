@@ -81,11 +81,10 @@ export function createUpgradeButtons() {
             <div class="biz-card-right">
                 <div class="biz-buy-action" role="button" tabindex="-1">
                     <span class="upgrade-qty">COMPRAR ×1</span>
-                    <span class="upgrade-cost">$${formatNumber(getUpgradeCost(i))}</span>
+                    <span class="upgrade-cost">${formatNumber(getUpgradeCost(i))}</span>
                 </div>
                 <button class="manager-btn" title="Gerente automatiza a compra deste negócio"></button>
             </div>
-            <div class="upgrade-count" style="display:none;"></div>
             <div class="upgrade-lock-overlay">
                 <div class="lock-shield"><svg class="icon icon-lg"><use href="#i-lock"/></svg></div>
                 <div class="lock-content">
@@ -115,7 +114,6 @@ export function createUpgradeButtons() {
             qty: card.querySelector('.upgrade-qty'),
             cost: card.querySelector('.upgrade-cost'),
             income: card.querySelector('.upgrade-income'),
-            count: card.querySelector('.upgrade-count'),
             levelNum: card.querySelector('.biz-level-num'),
             lock: card.querySelector('.upgrade-lock'),
             lockFill: card.querySelector('.lock-progress-fill'),

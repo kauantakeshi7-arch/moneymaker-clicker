@@ -1527,12 +1527,16 @@ main::-webkit-scrollbar-thumb:hover {
         flex-wrap: wrap;
         padding: 6px 8px; gap: 6px;
     }
+    /* `width: 100%` não basta: como item flex ele ainda encolhe para caber ao
+       lado dos botões. `flex: 0 0 100%` é o que força a quebra de linha. */
     .header-center {
-        order: 3; width: 100%;
+        order: 3; flex: 0 0 100%; width: 100%; min-width: 0;
     }
     .header-telemetry-console {
         width: 100%; justify-content: space-around; padding: 3px 4px;
+        flex-wrap: wrap; row-gap: 2px;   /* rede de segurança em telas de 320px */
     }
+    .header-telemetry-console .stat-box { min-width: 0; }
     .brand-chip { padding: 3px 6px; }
     .brand-chip-title { font-size: 9.5px; }
     .stat-box { padding: 3px 6px; }
@@ -1545,14 +1549,55 @@ main::-webkit-scrollbar-thumb:hover {
     .info-grid { grid-template-columns: repeat(2, 1fr); }
     .click-section { padding: 14px 10px; gap: 10px; }
 
-    /* 2 colunas em vez de 5: cards grandes o bastante para ler e tocar */
-    .upgrades-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    /* ===== CARD DE NEGÓCIO NO CELULAR =====
+       O layout de três colunas some: com 375px sobravam 94px para a coluna
+       central, que precisa de ~126px — o nome colapsava para largura zero e o
+       subtítulo vazava por cima do selo. Aqui vira duas linhas. */
+    .upgrade-btn.biz-card {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+            "left  center"
+            "right right";
+        align-items: center;
+        gap: 9px 10px;
+        padding: 10px;
+        min-height: 0;
+    }
+    .biz-card-left   { grid-area: left; }
+    .biz-card-center { grid-area: center; min-width: 0; }
+    .biz-card-right  {
+        grid-area: right; min-width: 0;
+        flex-direction: row; align-items: stretch; gap: 8px;
+    }
+    .biz-card-right .biz-buy-action { flex: 2; min-width: 0; }
+    .biz-card-right .manager-btn    { flex: 1; min-width: 0; margin-top: 0; }
+
+    /* Sem isto o texto vaza do container em vez de ser cortado */
+    .biz-name-box { min-width: 0; overflow: hidden; }
+    .biz-name-box .upgrade-name,
+    .biz-name-box .biz-tag {
+        display: block; max-width: 100%;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .biz-meta-row { gap: 6px; min-width: 0; }
+    .biz-tier-badge { flex-shrink: 0; }
+    /* Nome e subtítulo disputavam a mesma linha e o nome — que é o que
+       identifica o negócio — era o cortado. Empilhados, o nome usa a largura
+       toda e o subtítulo vai abaixo. */
+    .biz-name-box {
+        flex: 1 1 auto;
+        display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+    }
+    .biz-name-box .upgrade-name { font-size: 12.5px; line-height: 1.25; }
+    .biz-name-box .biz-tag { font-size: 8.5px; opacity: 0.7; line-height: 1.2; }
+
+    .upgrades-grid { grid-template-columns: 1fr; gap: 8px; }
     .upgrade-btn { padding: 9px 8px; gap: 3px; }
     .upgrade-icon { width: 30px; height: 30px; }
     .upgrade-name { font-size: 12px; }
     .upgrade-cost, .upgrade-income { font-size: 11px; }
     .upgrade-qty { font-size: 11px; top: 5px; left: 7px; }
-    .upgrade-count { width: 20px; height: 20px; font-size: 10px; top: 5px; right: 5px; }
     .upgrade-lock-overlay { font-size: 26px; gap: 5px; }
     .upgrade-lock { font-size: 11px; }
     .upgrade-btn.best-buy::after { font-size: 14px; bottom: 44px; right: 6px; }

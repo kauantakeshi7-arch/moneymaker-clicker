@@ -25,7 +25,7 @@ export const CRISES = [
                 const cost = Math.max(100, dps * 15);
                 gameState.money = Math.max(0, gameState.money - cost);
                 playCashSound();
-                showNotification(`Firewall restaurado com sucesso! Custo: -$${formatNumber(cost)}`, '🛡️', 3500);
+                showNotification(`Firewall restaurado com sucesso! Custo: -${formatNumber(cost)}`, '🛡️', 3500);
             }
         },
         optionB: {
@@ -39,12 +39,12 @@ export const CRISES = [
                     playCritSound();
                     shockwave('#00ff88');
                     spawnConfetti();
-                    showNotification(`VITÓRIA HACKER: Servidores inimigos drenados! +$${formatNumber(reward)}!`, '💎', 4000);
+                    showNotification(`VITÓRIA HACKER: Servidores inimigos drenados! +${formatNumber(reward)}!`, '💎', 4000);
                 } else {
                     const penalty = Math.max(100, dps * 20);
                     gameState.money = Math.max(0, gameState.money - penalty);
                     playSound(400, 300);
-                    showNotification(`Contra-ataque falhou! Prejuízo de -$${formatNumber(penalty)}`, '⚠️', 3500);
+                    showNotification(`Contra-ataque falhou! Prejuízo de -${formatNumber(penalty)}`, '⚠️', 3500);
                 }
             }
         }
@@ -64,7 +64,7 @@ export const CRISES = [
                 addMoney(reward, true);
                 playCashSound();
                 spawnConfetti();
-                showNotification(`Acordo assinado! Injeção de caixa imediata: +$${formatNumber(reward)}!`, '💰', 4000);
+                showNotification(`Acordo assinado! Injeção de caixa imediata: +${formatNumber(reward)}!`, '💰', 4000);
             }
         },
         optionB: {
@@ -93,7 +93,7 @@ export const CRISES = [
                 const cost = Math.max(80, dps * 12);
                 gameState.money = Math.max(0, gameState.money - cost);
                 playCashSound();
-                showNotification(`Imprensa pacificada. Confiabilidade mantida! (-$${formatNumber(cost)})`, '📰', 3500);
+                showNotification(`Imprensa pacificada. Confiabilidade mantida! (-${formatNumber(cost)})`, '📰', 3500);
             }
         },
         optionB: {

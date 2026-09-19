@@ -152,7 +152,7 @@ export function updateDisplay() {
         if (refs.buyBtn) refs.buyBtn.classList.toggle('disabled', !canAfford);
 
         setText(refs.qty, bulkMode === 'max' ? `COMPRAR ×${qty}` : `COMPRAR ×${bulkMode}`);
-        setText(refs.cost, `$${formatNumber(cost)}`);
+        setText(refs.cost, `${formatNumber(cost)}`);
 
         const totalMult = getUpgradeMilestoneMult(i) * getBusinessUpgradeMult(i);
         setText(refs.income,
@@ -160,12 +160,6 @@ export function updateDisplay() {
 
         const owned = upgrades[i].owned;
         if (refs.levelNum) setText(refs.levelNum, owned);
-        if (owned > 0) {
-            refs.count.style.display = '';
-            setText(refs.count, owned);
-        } else if (refs.count.style.display !== 'none') {
-            refs.count.style.display = 'none';
-        }
 
         // Ciclo de receita visual pulsante
         if (refs.cycleFill) {

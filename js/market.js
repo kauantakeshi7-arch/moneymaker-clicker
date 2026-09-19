@@ -270,7 +270,7 @@ export function renderMarketUI() {
                         </div>
                     </div>
                     <div class="asset-price-box">
-                        <div class="asset-price ${changeClass}">$${formatNumber(curPrice)}</div>
+                        <div class="asset-price ${changeClass}">${formatNumber(curPrice)}</div>
                         <div class="asset-change ${changeClass}">${changeSign}${changePct.toFixed(1)}%</div>
                     </div>
                 </div>
@@ -280,8 +280,8 @@ export function renderMarketUI() {
                 </div>
 
                 <div class="asset-position-bar">
-                    <div>Carteira: <strong>${a.owned} cotas</strong> ($${formatNumber(positionValue)})</div>
-                    <div>Lucro: <strong class="${unRealizedProfit >= 0 ? 'price-up' : 'price-down'}">${unRealizedProfit >= 0 ? '+' : ''}$${formatNumber(unRealizedProfit)} (${unRealizedPct}%)</strong></div>
+                    <div>Carteira: <strong>${a.owned} cotas</strong> (${formatNumber(positionValue)})</div>
+                    <div>Lucro: <strong class="${unRealizedProfit >= 0 ? 'price-up' : 'price-down'}">${unRealizedProfit >= 0 ? '+' : ''}${formatNumber(unRealizedProfit)} (${unRealizedPct}%)</strong></div>
                 </div>
 
                 <div class="asset-trade-actions">
