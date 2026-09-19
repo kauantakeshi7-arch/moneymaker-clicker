@@ -24,6 +24,7 @@ import {
     openModal, closeModal, exportSave, resetGame,
     buyMoneyUpgrade, buyPrestigeShopItem,
     copySaveToClipboard, importSaveFromText, showOfflineModal
+} from './ui/modals.js';
 import { initSkyline, syncSkyline, drawSkyline, pruneSkyline, registerSkylineHooks, pulseSkylineClick } from './skyline.js';
 import { ensureActiveContracts, recordContractProgress, updateContractBadge } from './contracts.js';
 import { initNewsTicker } from './news.js';
