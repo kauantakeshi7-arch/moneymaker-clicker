@@ -1,6 +1,7 @@
 // Sistema de Habilidades Estratégicas do Magnata (Active Tactical Skills).
 // Permite ao jogador acionar poderes com cooldown e duração que mudam o ritmo de jogo.
 
+import { upgrades } from './config.js';
 import { gameState } from './state.js';
 import { getRawDPS, getEffectiveMultiplier, addMoney } from './economy.js';
 import { formatNumber, showNotification, playSound, shockwave } from './utils.js';
@@ -48,6 +49,29 @@ const state = {
     cooldownUntil: { overclock: 0, hyperclick: 0, dividend: 0 }
 };
 
+export function isAbilityUnlocked(id) {
+    let total = 0;
+    for (const u of upgrades) total += u.owned;
+
+    if (id === 'overclock') {
+        return total >= 10;
+    }
+    if (id === 'hyperclick') {
+        return total >= 25 || gameState.maxCombo >= 15;
+    }
+    if (id === 'dividend') {
+        return upgrades[2] && upgrades[2].owned >= 1;
+    }
+    return true;
+}
+
+export function getAbilityUnlockReqText(id) {
+    if (id === 'overclock') return '10 Negócios';
+    if (id === 'hyperclick') return '25 Negócios';
+    if (id === 'dividend') return '1 Corporação';
+    return '';
+}
+
 export function isAbilityActive(id) {
     return Date.now() < (state.activeUntil[id] || 0);
 }
@@ -68,6 +92,11 @@ export function isHyperClickActive() {
 export function triggerAbility(id) {
     const def = ABILITIES.find(a => a.id === id);
     if (!def) return false;
+
+    if (!isAbilityUnlocked(id)) {
+        showNotification(`🔒 Bloqueado: Requer ${getAbilityUnlockReqText(id)}!`, '🔒', 2500);
+        return false;
+    }
 
     const now = Date.now();
     if (now < (state.cooldownUntil[id] || 0)) {
@@ -92,7 +121,11 @@ export function triggerAbility(id) {
     } else if (id === 'dividend') {
         const dps = getRawDPS() * getEffectiveMultiplier();
         const durationSecs = isTechUnlocked('f2') ? 60 : 45;
-        const payout = Math.max(100, dps * durationSecs);
+        const payout = dps * durationSecs;
+        if (payout <= 0) {
+            showNotification('Construa renda passiva antes de resgatar dividendos!', '⚠️', 2500);
+            return false;
+        }
         addMoney(payout);
         spawnMoneyRain(28);
         spawnConfetti();
@@ -114,6 +147,19 @@ export function updateAbilitiesUI() {
         const cdBar = document.getElementById(`abilityCd_${def.id}`);
         const timerLabel = document.getElementById(`abilityTimer_${def.id}`);
         if (!btn) continue;
+
+        const unlocked = isAbilityUnlocked(def.id);
+        btn.classList.toggle('locked-ability', !unlocked);
+
+        if (!unlocked) {
+            btn.classList.remove('active', 'on-cooldown');
+            if (timerLabel) timerLabel.textContent = '🔒';
+            if (cdBar) cdBar.style.width = '0%';
+            btn.title = `[Bloqueado] Requer: ${getAbilityUnlockReqText(def.id)}`;
+            continue;
+        }
+
+        btn.title = `[${def.key}] ${def.name}: ${def.desc}`;
 
         const isActive = now < (state.activeUntil[def.id] || 0);
         const remCd = Math.max(0, (state.cooldownUntil[def.id] || 0) - now);

@@ -4,8 +4,8 @@
 
 import {
     upgrades, MONEY_UPGRADES, MONEY_UPGRADES_BY_ID, COST_GROWTH,
-    MILESTONE_TIERS, BUSINESS_UNLOCK_THRESHOLD,
-    FEVER_COMBO_THRESHOLD, COMBO_MILESTONES, COMBO_TIMEOUT_MS,
+    MILESTONE_TIERS, BUSINESS_UNLOCK_THRESHOLD, getBusinessUnlockRequirement,
+    FEVER_COMBO_THRESHOLD, COMBO_MILESTONES, COMBO_TIMEOUT_MS, getComboMultiplier,
     BASE_CRIT_CHANCE, BASE_CRIT_MULTIPLIER, BASE_CLICK_PERCENT,
     MANAGER_COST_FACTOR, OFFLINE_CAP_SECONDS, OFFLINE_BASE_EFFICIENCY,
     MONEY_CAP, getPrestigeMultiplierForLevel, getPrestigeCostForLevel,
@@ -135,7 +135,8 @@ export function getMaxAffordable(idx, budget = gameState.money) {
 
 export function isBusinessUnlocked(idx) {
     if (idx === 0 || upgrades[idx].owned > 0) return true;
-    return upgrades[idx - 1].owned >= BUSINESS_UNLOCK_THRESHOLD;
+    const req = getBusinessUnlockRequirement(idx);
+    return upgrades[idx - 1].owned >= req;
 }
 
 export function getUpgradeMilestoneMult(idx) {
@@ -215,9 +216,8 @@ export function addMoney(amount, isClick = false) {
     if (!Number.isFinite(amount) || amount <= 0) return;
 
     const mult = getEffectiveMultiplier();
-    // O combo é bônus de clique: aplicá-lo à renda passiva deixava um
-    // auto-clicker multiplicar a economia inteira por até ×999.
-    const total = amount * mult * (isClick ? gameState.combo : 1);
+    const comboFactor = isClick ? getComboMultiplier(gameState.combo) : 1;
+    const total = amount * mult * comboFactor;
     if (!Number.isFinite(total) || total < 0) return;
 
     gameState.money = Math.min(gameState.money + total, MONEY_CAP);
@@ -243,13 +243,17 @@ function registerClick(mult) {
     for (const m of COMBO_MILESTONES) {
         if (gameState.combo !== m || gameState.lastComboMilestone >= m) continue;
         gameState.lastComboMilestone = m;
-        const bonus = Math.max(10, getRawDPS() * mult * 5);
-        gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
-        gameState.totalEarned += bonus;
-        gameState.runEarned += bonus;
-        const fever = (m >= FEVER_COMBO_THRESHOLD && hasRunEffect('fever')) ? ' MODO FEBRE ATIVO!' : '';
-        showNotification(`Combo ×${m}! Bônus de ${formatNumber(bonus)}!${fever}`, '🔥', 3000);
-        spawnConfetti();
+        const clickVal = getClickValue() * mult;
+        const dps = getRawDPS() * mult;
+        const bonus = Math.max(Math.round(clickVal * 1.5), dps * 2);
+        if (bonus > 0) {
+            gameState.money = Math.min(gameState.money + bonus, MONEY_CAP);
+            gameState.totalEarned += bonus;
+            gameState.runEarned += bonus;
+            const fever = (m >= FEVER_COMBO_THRESHOLD && hasRunEffect('fever')) ? ' MODO FEBRE ATIVO!' : '';
+            showNotification(`Combo ×${m}! Bônus de ${formatNumber(bonus)}!${fever}`, '🔥', 3000);
+            spawnConfetti();
+        }
     }
 }
 

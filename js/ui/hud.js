@@ -1,6 +1,9 @@
 // Render de um frame: cabeçalho, progresso e estado dos cards.
 
-import { upgrades, MONEY_UPGRADES, getPrestigeCostForLevel, MILESTONE_TIERS, COMBO_TIMEOUT_MS } from '../config.js';
+import {
+    upgrades, MONEY_UPGRADES, getPrestigeCostForLevel, MILESTONE_TIERS,
+    COMBO_TIMEOUT_MS, getBusinessUnlockRequirement
+} from '../config.js';
 import { gameState } from '../state.js';
 import { formatNumber, playSound, showBanner, shockwave } from '../utils.js';
 import { spawnConfetti } from '../vfx.js';
@@ -128,8 +131,8 @@ export function updateDisplay() {
         if (!unlocked) {
             refs.card.classList.add('disabled');
             const prevOwned = i > 0 ? upgrades[i - 1].owned : 0;
-            const req = 5;
-            setText(refs.lock, `Requer 5 × ${upgrades[i - 1].name} (${prevOwned}/${req})`);
+            const req = getBusinessUnlockRequirement(i);
+            setText(refs.lock, `Requer ${req} × ${upgrades[i - 1].name} (${prevOwned}/${req})`);
             if (refs.lockFill) {
                 const pPct = Math.min(100, Math.max(0, (prevOwned / req) * 100));
                 refs.lockFill.style.width = `${pPct.toFixed(1)}%`;

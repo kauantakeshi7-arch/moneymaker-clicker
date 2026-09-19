@@ -340,6 +340,19 @@ main {
 .ability-btn.on-cooldown {
     opacity: 0.5; cursor: not-allowed; filter: grayscale(50%);
 }
+.ability-btn.locked-ability {
+    opacity: 0.45; cursor: not-allowed; filter: grayscale(80%);
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    background: rgba(10, 14, 25, 0.6) !important;
+    box-shadow: none !important;
+}
+.ability-btn.locked-ability:hover {
+    transform: none;
+    border-color: rgba(255, 100, 100, 0.3) !important;
+}
+.ability-btn.locked-ability .ability-status-dot {
+    background: #555; box-shadow: none;
+}
 .ability-progress-bar {
     position: absolute; left: 0; bottom: 0; width: 100%; height: 3px;
     background: rgba(0, 0, 0, 0.55); pointer-events: none;

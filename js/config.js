@@ -13,27 +13,39 @@ export const MONEY_CAP = 1e300;  // sanidade contra Infinity; dinheiro é float,
 // `glyph` é o id do símbolo SVG usado no card (que fica sempre na tela);
 // `icon` é o emoji usado em listas de modal e avisos passageiros.
 export const upgrades = [
-    { name: 'Freelancer',         glyph: 'b-person', icon: '👤', baseIncome: 0.25,   baseCost: 20,       owned: 0, manager: false },
-    { name: 'Startup',            glyph: 'b-shop',   icon: '🏢', baseIncome: 2,      baseCost: 200,      owned: 0, manager: false },
-    { name: 'Corporação',         glyph: 'b-bank',   icon: '🏛️', baseIncome: 20,     baseCost: 2000,     owned: 0, manager: false },
-    { name: 'Multinacional',      glyph: 'b-globe',  icon: '🌍', baseIncome: 200,    baseCost: 20000,    owned: 0, manager: false },
-    { name: 'Gigante TI',         glyph: 'b-server', icon: '💻', baseIncome: 2000,   baseCost: 200000,   owned: 0, manager: false },
-    { name: 'Império Financeiro', glyph: 'b-vault',  icon: '💰', baseIncome: 20000,  baseCost: 2000000,  owned: 0, manager: false },
-    { name: 'Império Global',     glyph: 'b-crown',  icon: '👑', baseIncome: 200000, baseCost: 20000000, owned: 0, manager: false }
+    { name: 'Freelancer',         glyph: 'b-person', icon: '👤', baseIncome: 0.25,   baseCost: 25,       owned: 0, manager: false },
+    { name: 'Startup',            glyph: 'b-shop',   icon: '🏢', baseIncome: 2.5,    baseCost: 250,      owned: 0, manager: false },
+    { name: 'Corporação',         glyph: 'b-bank',   icon: '🏛️', baseIncome: 25,     baseCost: 2500,     owned: 0, manager: false },
+    { name: 'Multinacional',      glyph: 'b-globe',  icon: '🌍', baseIncome: 250,    baseCost: 25000,    owned: 0, manager: false },
+    { name: 'Gigante TI',         glyph: 'b-server', icon: '💻', baseIncome: 2500,   baseCost: 250000,   owned: 0, manager: false },
+    { name: 'Império Financeiro', glyph: 'b-vault',  icon: '💰', baseIncome: 25000,  baseCost: 2500000,  owned: 0, manager: false },
+    { name: 'Império Global',     glyph: 'b-crown',  icon: '👑', baseIncome: 250000, baseCost: 25000000, owned: 0, manager: false }
 ];
 
 // O custo precisa crescer mais rápido que os multiplicadores de renda somados.
-// Com 1.07 o payback caía para <1s com upgrades ativos: impressora de dinheiro.
 export const COST_GROWTH = 1.15;
 
-// Marcos automáticos por negócio: [unidades, multiplicador]. Limitados de
-// propósito — quando eram 2^(owned/10) o crescimento virava duplamente exponencial.
+// Marcos automáticos por negócio: [unidades, multiplicador].
 export const MILESTONE_TIERS = [[50, 4], [25, 2.5], [10, 2]];
 
-export const BUSINESS_UNLOCK_THRESHOLD = 5;  // unidades do anterior para liberar o próximo
+// Curva progressiva de desbloqueio de negócios por tier
+export const BUSINESS_UNLOCK_REQUIREMENTS = [10, 15, 20, 25, 25, 30];
+export function getBusinessUnlockRequirement(idx) {
+    if (idx <= 0) return 0;
+    return BUSINESS_UNLOCK_REQUIREMENTS[idx - 1] || 25;
+}
+export const BUSINESS_UNLOCK_THRESHOLD = 10;  // unidades do anterior para liberar o próximo (tier 1)
+
 export const FEVER_COMBO_THRESHOLD = 50;
 export const COMBO_MILESTONES = [10, 25, 50, 100];
 export const COMBO_TIMEOUT_MS = 1000;         // tolerância de tempo para sustentar o combo
+
+/** Multiplicador sublinear de combo: recompensa o ritmo sem quebrar o início */
+export function getComboMultiplier(combo) {
+    if (combo <= 1) return 1;
+    return 1 + Math.min(2.5, (combo - 1) * 0.05);
+}
+
 export const BASE_CRIT_CHANCE = 0.05;
 export const BASE_CRIT_MULTIPLIER = 15;
 export const BASE_CLICK_PERCENT = 0.05;      // clique vale % da renda passiva

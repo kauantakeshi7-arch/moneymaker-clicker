@@ -7,8 +7,9 @@
 import {
     upgrades, MONEY_UPGRADES, COST_GROWTH, MILESTONE_TIERS,
     defaultPrestigeShopLevels, getPrestigeCostForLevel, getPrestigeMultiplierForLevel,
-    COMBO_TIMEOUT_MS, totalOwned
+    COMBO_TIMEOUT_MS, totalOwned, getBusinessUnlockRequirement, getComboMultiplier
 } from '../js/config.js';
+import { isAbilityUnlocked, triggerAbility } from '../js/abilities.js';
 import { gameState } from '../js/state.js';
 import { formatNumber, setNotationMode } from '../js/utils.js';
 import {
@@ -174,8 +175,8 @@ test('negócios desbloqueiam em cascata', () => {
     reset();
     assert(isBusinessUnlocked(0), 'o primeiro começa aberto');
     assert(!isBusinessUnlocked(1), 'o segundo começa fechado');
-    upgrades[0].owned = 5;
-    assert(isBusinessUnlocked(1), 'cinco do anterior deveria abrir');
+    upgrades[0].owned = getBusinessUnlockRequirement(1);
+    assert(isBusinessUnlocked(1), 'meta do anterior deveria abrir');
     assert(!isBusinessUnlocked(2), 'não deve abrir dois de uma vez');
 });
 
@@ -574,6 +575,28 @@ test('crises corporativas são disparadas com opções estratégicas válidas', 
     assert(getActiveCrisis() !== null, 'crise deve estar ativa');
     dismissCrisis();
     assert(getActiveCrisis() === null, 'crise deve estar nula após descarte');
+});
+
+test('combo possui multiplicador sublinear balanceado', () => {
+    assert(getComboMultiplier(1) === 1, 'combo 1 deve ser 1x');
+    assert(getComboMultiplier(10) > 1 && getComboMultiplier(10) < 2, 'combo 10 deve ser sublinear');
+    assert(getComboMultiplier(50) <= 3.5, 'combo 50 deve ter teto controlado');
+});
+
+test('habilidades táticas começam bloqueadas e desbloqueiam por mérito', () => {
+    reset();
+    assert(!isAbilityUnlocked('overclock'), 'sobrecarga começa bloqueada');
+    assert(!isAbilityUnlocked('hyperclick'), 'hiper foco começa bloqueado');
+    assert(!isAbilityUnlocked('dividend'), 'dividendos começa bloqueado');
+
+    // Desbloqueia sobrecarga com 10 negócios
+    upgrades[0].owned = 10;
+    assert(isAbilityUnlocked('overclock'), '10 negócios devem desbloquear sobrecarga');
+    assert(!isAbilityUnlocked('dividend'), 'dividendos ainda bloqueado sem corporação');
+
+    // Desbloqueia dividendos com corporação
+    upgrades[2].owned = 1;
+    assert(isAbilityUnlocked('dividend'), '1 corporação deve liberar dividendos');
 });
 
 /** Roda tudo e devolve o relatório. */
