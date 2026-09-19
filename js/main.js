@@ -12,8 +12,10 @@ import { initPixiEngine, spawnClickParticle, spawnConfetti, spawnMoneyRain } fro
 import {
     addMoney, getClickValue, getCritChance, getCritMultiplier, getRawDPS,
     getRunEffectValue, prestige, runAI, checkAchievements, spawnGoldenEvent,
-    applyOfflineProgress, setAutomationEnabled, getEffectiveMultiplier, isFeverActive
+    applyOfflineProgress, setAutomationEnabled, getEffectiveMultiplier, isFeverActive,
+    registerAbilityHooks
 } from './economy.js';
+import { triggerAbility, updateAbilitiesUI, getActiveAbilityMultiplier, isHyperClickActive } from './abilities.js';
 import { el, cacheDomRefs } from './ui/dom.js';
 import { createUpgradeButtons, setBulkMode } from './ui/businesses.js';
 import { updateDisplay, resetUnlockTracking } from './ui/hud.js';
@@ -64,6 +66,7 @@ const ACTIONS = {
     setBulk: target => setBulkMode(target === 'max' ? 'max' : Number(target)),
     buyUpgrade: target => buyMoneyUpgrade(target),
     buyPrestige: target => buyPrestigeShopItem(target),
+    triggerAbility: target => triggerAbility(target),
     exportSave,
     importSave: () => (el.importInput || document.getElementById('importInput')).click(),
     copySave: copySaveToClipboard,
@@ -96,7 +99,12 @@ function handleMainClick(e) {
     const isCrit = Math.random() < getCritChance();
     addMoney(isCrit ? base * getCritMultiplier() : base, true);
 
-    spawnClickParticle(gameState.money - before, e.clientX, e.clientY - 20, isCrit);
+    const btn = el.clickButton || document.getElementById('clickButton');
+    const rect = btn ? btn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
+    const clickX = (e && e.clientX && e.clientX > 0) ? e.clientX : (rect.left + rect.width / 2);
+    const clickY = (e && e.clientY && e.clientY > 0) ? e.clientY - 20 : (rect.top + rect.height / 2 - 20);
+
+    spawnClickParticle(gameState.money - before, clickX, clickY, isCrit);
     recordContractProgress('clicks', 1);
     recordContractProgress('combo', gameState.combo);
     if (isCrit) {
@@ -121,6 +129,9 @@ window.addEventListener('keydown', (e) => {
         return;
     }
     if (modalOpen) return;
+    if (e.key === '1') triggerAbility('overclock');
+    if (e.key === '2') triggerAbility('hyperclick');
+    if (e.key === '3') triggerAbility('dividend');
     if (e.key === 'p' || e.key === 'P') doPrestige();
     if (e.key === 'c' || e.key === 'C') toggleChart();
     if (e.key === 's' || e.key === 'S') openModal('statsModal');
@@ -245,11 +256,27 @@ function init() {
         b.addEventListener('mouseenter', () => playHoverSound());
     });
 
+    registerAbilityHooks(getActiveAbilityMultiplier, isHyperClickActive);
+
+    const coinBtn = el.clickButton || document.getElementById('clickButton');
+    if (coinBtn) {
+        coinBtn.addEventListener('mousemove', (ev) => {
+            const r = coinBtn.getBoundingClientRect();
+            const x = (ev.clientX - r.left) / r.width - 0.5;
+            const y = (ev.clientY - r.top) / r.height - 0.5;
+            coinBtn.style.transform = `perspective(320px) rotateX(${-y * 22}deg) rotateY(${x * 22}deg) scale(1.04)`;
+        });
+        coinBtn.addEventListener('mouseleave', () => {
+            coinBtn.style.transform = '';
+        });
+    }
+
     createUpgradeButtons();
     initChart();
     initSkyline();
     initPixiEngine();
     updateDisplay();
+    updateAbilitiesUI();
 
     if (gameState.unlockedAchievements.length > 0) {
         el.achBadge.style.display = 'flex';
@@ -355,6 +382,7 @@ function tickGoldenEvents(deltaMs) {
 
 function renderLoop(now) {
     updateDisplay();
+    updateAbilitiesUI();
     if (el.clickButton) {
         el.clickButton.classList.toggle('fever-active', isFeverActive());
     }

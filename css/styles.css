@@ -13,6 +13,11 @@ button, .upgrade-btn, .bulk-btn, .achievement-item, .golden-event, #clickButton 
     --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.08);
 }
 
+html {
+    height: 100%;
+    overflow: hidden;
+}
+
 @keyframes bgShift {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
@@ -23,11 +28,12 @@ body {
     background-size: 300% 300%;
     animation: bgShift 18s ease infinite;
     color: var(--text-primary); font-family: 'JetBrains Mono', 'Courier New', monospace;
+    height: 100%;
     height: 100vh;
-    /* dvh acompanha a barra de endereço do navegador móvel; sem isso o rodapé fica cortado */
     height: 100dvh;
     overflow: hidden; display: flex; flex-direction: column;
     position: relative;
+    margin: 0; padding: 0;
 }
 body::before {
     content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
@@ -38,9 +44,11 @@ body::before {
 body::after {
     content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background: url('../assets/images/splash.jpg') center top / cover no-repeat;
-    opacity: 0.04;
+    opacity: 0.045;
     mix-blend-mode: screen;
     filter: saturate(1.4);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 22%, rgba(0,0,0,0.85) 65%, black 100%);
+    mask-image: radial-gradient(circle at 50% 50%, transparent 22%, rgba(0,0,0,0.85) 65%, black 100%);
 }
 
 header {
@@ -137,12 +145,134 @@ header {
 
 main {
     flex: 1; overflow-y: auto; padding: 12px;
-    display: flex; flex-direction: column; gap: 12px;
     position: relative; z-index: 1;
 }
-/* Sem isto os filhos encolhem quando falta altura (telas pequenas) e a
-   .click-section, que tem overflow:hidden, corta o botão principal do jogo. */
-main > * { flex-shrink: 0; }
+
+/* ===== DASHBOARD TYCOON LAYOUT ===== */
+.dashboard-deck {
+    display: flex; flex-direction: column; gap: 12px; width: 100%;
+}
+.deck-left, .deck-right {
+    display: flex; flex-direction: column; gap: 12px; width: 100%;
+}
+.deck-right-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; flex-wrap: wrap; margin-bottom: 2px;
+}
+
+/* Habilidades Táticas Ativas (Active Tactical Abilities Strip) */
+.tactical-abilities-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    width: 100%; max-width: 360px; margin: 2px 0;
+}
+.ability-btn {
+    position: relative; display: flex; align-items: center; gap: 6px;
+    padding: 7px 8px; border-radius: 9px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 212, 255, 0.04));
+    border: 1px solid rgba(0, 212, 255, 0.3); color: #fff;
+    cursor: pointer; overflow: hidden; transition: all 0.18s ease; user-select: none;
+}
+.ability-btn:hover:not(.on-cooldown) {
+    border-color: var(--primary); background: rgba(0, 212, 255, 0.12);
+    transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0, 212, 255, 0.25);
+}
+.ability-btn:active:not(.on-cooldown) { transform: scale(0.96); }
+.ability-btn.active {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.18), rgba(0, 255, 136, 0.1));
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.4);
+    animation: abilityPulse 1.2s ease-in-out infinite alternate;
+}
+@keyframes abilityPulse {
+    from { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+    to   { box-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+}
+.ability-btn.on-cooldown {
+    opacity: 0.55; cursor: not-allowed; filter: grayscale(40%);
+}
+.ability-progress-bar {
+    position: absolute; left: 0; bottom: 0; width: 100%; height: 3px;
+    background: rgba(0, 0, 0, 0.45); pointer-events: none;
+}
+.ability-progress-fill {
+    height: 100%; width: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    transition: width 0.15s linear;
+}
+.ability-btn.active .ability-progress-fill {
+    background: linear-gradient(90deg, #ffaa00, #ffd700);
+}
+.ability-icon { font-size: 15px; flex-shrink: 0; }
+.ability-info {
+    display: flex; flex-direction: column; text-align: left; line-height: 1.1;
+    flex: 1; overflow: hidden;
+}
+.ability-name {
+    font-size: 9px; font-weight: 800; color: #ffffff;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ability-sub {
+    font-size: 7.5px; color: var(--gold); font-weight: 700; margin-top: 1px;
+}
+.ability-key {
+    font-family: 'Orbitron', monospace; font-size: 8px; font-weight: 800;
+    color: var(--primary); background: rgba(0, 212, 255, 0.12);
+    border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 4px;
+    padding: 1px 4px; flex-shrink: 0;
+}
+
+/* Custom Scrollbars */
+.deck-left::-webkit-scrollbar,
+.deck-right::-webkit-scrollbar,
+main::-webkit-scrollbar {
+    width: 6px;
+}
+.deck-left::-webkit-scrollbar-thumb,
+.deck-right::-webkit-scrollbar-thumb,
+main::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.28); border-radius: 3px;
+}
+.deck-left::-webkit-scrollbar-thumb:hover,
+.deck-right::-webkit-scrollbar-thumb:hover,
+main::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Layout Desktop em 2 colunas */
+@media (min-width: 960px) {
+    main {
+        overflow: hidden; padding: 10px 16px;
+    }
+    .dashboard-deck {
+        display: grid;
+        grid-template-columns: minmax(360px, 420px) 1fr;
+        gap: 16px; height: 100%; max-width: 1600px; margin: 0 auto;
+    }
+    .deck-left {
+        height: 100%; overflow-y: auto; padding-right: 6px;
+    }
+    .deck-right {
+        height: 100%; overflow-y: auto; padding: 14px;
+        background: rgba(10, 15, 30, 0.55);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        display: flex; flex-direction: column; gap: 10px;
+    }
+    .skyline-panel {
+        height: 155px !important;
+    }
+    .click-section {
+        padding: 16px 12px 14px;
+    }
+    .deck-right .upgrades-grid {
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 8px; flex: 1;
+    }
+    .deck-right .controls {
+        margin-top: auto; padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+}
 
 .section-header {
     color: var(--primary); font-weight: 700; font-size: 12px;

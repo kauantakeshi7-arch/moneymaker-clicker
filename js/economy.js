@@ -63,6 +63,14 @@ export function isFeverActive() {
 }
 
 // ============ MULTIPLICADORES ============
+let activeAbilityMultiplierFn = () => 1;
+let hyperClickActiveFn = () => false;
+
+export function registerAbilityHooks(getMultFn, isCritFn) {
+    if (getMultFn) activeAbilityMultiplierFn = getMultFn;
+    if (isCritFn) hyperClickActiveFn = isCritFn;
+}
+
 // Decomposto em fatores nomeados: é a fonte única da verdade e aparece assim
 // na tela de estatísticas, o que torna qualquer desequilíbrio visível.
 export function getMultiplierBreakdown() {
@@ -73,13 +81,14 @@ export function getMultiplierBreakdown() {
         upgrades: getRunUpgradeProduct('globalMult'),
         sinergias: getSynergyMultiplier(),
         eventoDourado: Date.now() < gameState.tempBoostExpiry ? gameState.tempBoostMult : 1,
-        febre: isFeverActive() ? 2 : 1
+        febre: isFeverActive() ? 2 : 1,
+        habilidade: activeAbilityMultiplierFn()
     };
 }
 
 export function getEffectiveMultiplier() {
     const b = getMultiplierBreakdown();
-    return b.prestígio * b.conquistas * b.lojaPrestígio * b.upgrades * b.sinergias * b.eventoDourado * b.febre;
+    return b.prestígio * b.conquistas * b.lojaPrestígio * b.upgrades * b.sinergias * b.eventoDourado * b.febre * b.habilidade;
 }
 
 export function getClickPercent() {
@@ -88,6 +97,7 @@ export function getClickPercent() {
 }
 
 export function getCritChance() {
+    if (hyperClickActiveFn()) return 1.0;
     const base = BASE_CRIT_CHANCE + gameState.prestigeShopLevels.critChance * 0.02;
     return Math.min(0.75, base + getRunUpgradeSum('critChanceAdd'));
 }

@@ -113,105 +113,144 @@
 </div>
 
 <main>
-    <!-- O cenário: a cidade cresce a cada negócio comprado. -->
-    <div class="skyline-panel">
-        <canvas id="skylineCanvas"></canvas>
-        <div class="skyline-caption">
-            <span id="skylineTitle">Seu império</span>
-            <span id="skylineCount">0 construções</span>
-        </div>
-    </div>
-
-    <div class="click-section">
-        <div class="total-earned">
-            <div class="total-earned-label">Total acumulado</div>
-            <div id="totalEarned" class="total-earned-value">$0</div>
-        </div>
-
-        <div class="click-btn-wrap">
-            <span class="click-ring click-ring-1"></span>
-            <span class="click-ring click-ring-2"></span>
-            <button id="clickButton" aria-label="Ganhar dinheiro">
-                <span class="coin-sheen"></span>
-            </button>
-        </div>
-
-        <div class="click-meta">
-            <span><svg class="icon"><use href="#i-cursor"/></svg><span id="clickCount">0</span></span>
-            <span class="click-meta-sep"></span>
-            <span><svg class="icon"><use href="#i-flame"/></svg>×<span id="comboDisplay">1</span></span>
-        </div>
-
-        <div class="prestige-progress-wrap">
-            <div class="prestige-progress-bar"><div class="prestige-progress-fill" id="prestigeProgressFill"></div></div>
-            <div class="prestige-progress-label" id="prestigeProgressLabel">Progresso para o próximo prestígio</div>
-        </div>
-
-        <div id="boostBanner" class="boost-banner" style="display:none;">
-            <div class="boost-content">
-                <span class="boost-icon">⚡</span>
-                <span class="boost-text" id="boostText">ACELERAÇÃO DOURADA</span>
-                <span class="boost-timer" id="boostTimer">00s</span>
+    <div class="dashboard-deck">
+        <!-- PAINEL ESQUERDO: Comando & Terminal Central -->
+        <div class="deck-left">
+            <div class="skyline-panel">
+                <canvas id="skylineCanvas"></canvas>
+                <div class="skyline-caption">
+                    <span id="skylineTitle">Seu império</span>
+                    <span id="skylineCount">0 construções</span>
+                </div>
             </div>
-            <div class="boost-bar"><div class="boost-fill" id="boostFill"></div></div>
+
+            <div class="click-section">
+                <div class="total-earned">
+                    <div class="total-earned-label">Total acumulado</div>
+                    <div id="totalEarned" class="total-earned-value">$0</div>
+                </div>
+
+                <div class="click-btn-wrap">
+                    <span class="click-ring click-ring-1"></span>
+                    <span class="click-ring click-ring-2"></span>
+                    <button id="clickButton" aria-label="Ganhar dinheiro">
+                        <span class="coin-sheen"></span>
+                    </button>
+                </div>
+
+                <div class="click-meta">
+                    <span><svg class="icon"><use href="#i-cursor"/></svg><span id="clickCount">0</span></span>
+                    <span class="click-meta-sep"></span>
+                    <span><svg class="icon"><use href="#i-flame"/></svg>×<span id="comboDisplay">1</span></span>
+                </div>
+
+                <!-- HABILIDADES ESTRATÉGICAS DO MAGNATA -->
+                <div class="tactical-abilities-strip">
+                    <button class="ability-btn" id="abilityBtn_overclock" data-action="triggerAbility" data-target="overclock" title="[1] Sobrecarga: Renda passiva ×2 por 15s">
+                        <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_overclock"></div></div>
+                        <span class="ability-icon">⚡</span>
+                        <div class="ability-info">
+                            <span class="ability-name">Sobrecarga</span>
+                            <span class="ability-sub">×2 DPS</span>
+                        </div>
+                        <span class="ability-key" id="abilityTimer_overclock">[1]</span>
+                    </button>
+                    <button class="ability-btn" id="abilityBtn_hyperclick" data-action="triggerAbility" data-target="hyperclick" title="[2] Hiper Foco: 100% de chance de clique crítico por 12s">
+                        <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_hyperclick"></div></div>
+                        <span class="ability-icon">🎯</span>
+                        <div class="ability-info">
+                            <span class="ability-name">Hiper Foco</span>
+                            <span class="ability-sub">100% Crítico</span>
+                        </div>
+                        <span class="ability-key" id="abilityTimer_hyperclick">[2]</span>
+                    </button>
+                    <button class="ability-btn" id="abilityBtn_dividend" data-action="triggerAbility" data-target="dividend" title="[3] Dividendos: Injeção imediata de 45s de renda no caixa">
+                        <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_dividend"></div></div>
+                        <span class="ability-icon">💰</span>
+                        <div class="ability-info">
+                            <span class="ability-name">Dividendos</span>
+                            <span class="ability-sub">+45s Caixa</span>
+                        </div>
+                        <span class="ability-key" id="abilityTimer_dividend">[3]</span>
+                    </button>
+                </div>
+
+                <div class="prestige-progress-wrap">
+                    <div class="prestige-progress-bar"><div class="prestige-progress-fill" id="prestigeProgressFill"></div></div>
+                    <div class="prestige-progress-label" id="prestigeProgressLabel">Progresso para o próximo prestígio</div>
+                </div>
+
+                <div id="boostBanner" class="boost-banner" style="display:none;">
+                    <div class="boost-content">
+                        <span class="boost-icon">⚡</span>
+                        <span class="boost-text" id="boostText">ACELERAÇÃO DOURADA</span>
+                        <span class="boost-timer" id="boostTimer">00s</span>
+                    </div>
+                    <div class="boost-bar"><div class="boost-fill" id="boostFill"></div></div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Combo</div>
+                    <div class="stat-value" id="comboValue">×1</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Mult</div>
+                    <div class="stat-value" id="multValue">×1.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Negócios</div>
+                    <div class="stat-value green" id="businessCount">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Próximo Custo</div>
+                    <div class="stat-value gold" id="nextPrestigeCost">$0</div>
+                </div>
+            </div>
+
+            <div class="chart-container" id="chartContainer">
+                <canvas id="progressChart"></canvas>
+            </div>
         </div>
-    </div>
-    
-    <div class="info-grid">
-        <div class="stat-box">
-            <div class="stat-label">Combo</div>
-            <div class="stat-value" id="comboValue">×1</div>
+
+        <!-- PAINEL DIREITO: Império de Negócios & Ferramentas -->
+        <div class="deck-right">
+            <div class="deck-right-header">
+                <div class="section-header">🏢 Negócios & Aquisições</div>
+                <div class="bulk-bar">
+                    <span style="font-size: 9px; color: var(--text-secondary); font-weight: 700;">Comprar:</span>
+                    <button class="bulk-btn active" data-mode="1" data-action="setBulk" data-target="1">×1</button>
+                    <button class="bulk-btn" data-mode="10" data-action="setBulk" data-target="10">×10</button>
+                    <button class="bulk-btn" data-mode="25" data-action="setBulk" data-target="25">×25</button>
+                    <button class="bulk-btn" data-mode="max" data-action="setBulk" data-target="max">MAX</button>
+                </div>
+            </div>
+            <div class="upgrades-grid" id="upgradesContainer"></div>
+
+            <div class="controls">
+                <button class="tool-btn tool-prestige" id="prestigeBtn" data-action="prestige" disabled>
+                    <svg class="icon"><use href="#i-star"/></svg><span>Prestígio</span>
+                </button>
+                <button class="tool-btn" data-action="openModal" data-target="upgradeShopModal">
+                    <svg class="icon"><use href="#i-bolt"/></svg><span>Upgrades</span>
+                    <span class="badge badge-green" id="upgradeBadge" style="display:none;">0</span>
+                </button>
+                <button class="tool-btn" data-action="openModal" data-target="prestigeShopModal">
+                    <svg class="icon"><use href="#i-cart"/></svg><span>Loja</span>
+                    <span class="badge" id="prestigePointBadge" style="display:none;">0</span>
+                </button>
+                <button class="tool-btn" data-action="openModal" data-target="economyModal">
+                    <svg class="icon"><use href="#i-ledger"/></svg><span>Economia</span>
+                </button>
+                <button class="tool-btn" data-action="openModal" data-target="statsModal">
+                    <svg class="icon"><use href="#i-pie"/></svg><span>Stats</span>
+                </button>
+                <button class="tool-btn" data-action="openModal" data-target="settingsModal">
+                    <svg class="icon"><use href="#i-gear"/></svg><span>Ajustes</span>
+                </button>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="stat-label">Mult</div>
-            <div class="stat-value" id="multValue">×1.00</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">Negócios</div>
-            <div class="stat-value green" id="businessCount">0</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">Próximo Custo</div>
-            <div class="stat-value gold" id="nextPrestigeCost">$0</div>
-        </div>
-    </div>
-    
-    <div class="section-header">🏢 Negócios</div>
-    <div class="bulk-bar">
-        <span style="font-size: 9px; color: var(--text-secondary);">Comprar:</span>
-        <button class="bulk-btn active" data-mode="1" data-action="setBulk" data-target="1">×1</button>
-        <button class="bulk-btn" data-mode="10" data-action="setBulk" data-target="10">×10</button>
-        <button class="bulk-btn" data-mode="25" data-action="setBulk" data-target="25">×25</button>
-        <button class="bulk-btn" data-mode="max" data-action="setBulk" data-target="max">MAX</button>
-    </div>
-    <div class="upgrades-grid" id="upgradesContainer"></div>
-    
-    <div class="chart-container" id="chartContainer">
-        <canvas id="progressChart"></canvas>
-    </div>
-    
-    <!-- Rotulados: seis ícones sozinhos não diziam qual era qual. -->
-    <div class="controls">
-        <button class="tool-btn tool-prestige" id="prestigeBtn" data-action="prestige" disabled>
-            <svg class="icon"><use href="#i-star"/></svg><span>Prestígio</span>
-        </button>
-        <button class="tool-btn" data-action="openModal" data-target="upgradeShopModal">
-            <svg class="icon"><use href="#i-bolt"/></svg><span>Upgrades</span>
-            <span class="badge badge-green" id="upgradeBadge" style="display:none;">0</span>
-        </button>
-        <button class="tool-btn" data-action="openModal" data-target="prestigeShopModal">
-            <svg class="icon"><use href="#i-cart"/></svg><span>Loja</span>
-            <span class="badge" id="prestigePointBadge" style="display:none;">0</span>
-        </button>
-        <button class="tool-btn" data-action="openModal" data-target="economyModal">
-            <svg class="icon"><use href="#i-ledger"/></svg><span>Economia</span>
-        </button>
-        <button class="tool-btn" data-action="openModal" data-target="statsModal">
-            <svg class="icon"><use href="#i-pie"/></svg><span>Stats</span>
-        </button>
-        <button class="tool-btn" data-action="openModal" data-target="settingsModal">
-            <svg class="icon"><use href="#i-gear"/></svg><span>Ajustes</span>
-        </button>
     </div>
 </main>
 
