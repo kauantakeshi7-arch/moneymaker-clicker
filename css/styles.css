@@ -289,22 +289,104 @@ main::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(90deg, rgba(0,212,255,0.4), transparent);
 }
 
-/* ===== CENÁRIO ===== */
+/* ===== CENÁRIO METRÓPOLE CYBERPUNK ===== */
 .skyline-panel {
-    position: relative; height: clamp(150px, 22vh, 210px);
-    border-radius: 16px; overflow: hidden;
-    border: 1px solid rgba(0,212,255,0.22);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+    position: relative;
+    height: clamp(165px, 24vh, 230px);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1.5px solid rgba(0, 212, 255, 0.35);
+    box-shadow: 0 12px 45px rgba(0, 0, 0, 0.55), 0 0 25px rgba(0, 212, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: #040814;
 }
-#skylineCanvas { display: block; width: 100%; height: 100%; }
+#skylineCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+}
+
+/* Cantoneiras HUD Táticas */
+.skyline-hud-bracket {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    z-index: 10;
+}
+.skyline-hud-bracket.tl { top: 6px; left: 6px; border-top: 2px solid var(--primary); border-left: 2px solid var(--primary); }
+.skyline-hud-bracket.tr { top: 6px; right: 6px; border-top: 2px solid var(--primary); border-right: 2px solid var(--primary); }
+.skyline-hud-bracket.bl { bottom: 6px; left: 6px; border-bottom: 2px solid var(--primary); border-left: 2px solid var(--primary); }
+.skyline-hud-bracket.br { bottom: 6px; right: 6px; border-bottom: 2px solid var(--primary); border-right: 2px solid var(--primary); }
+
+/* Scanlines e Vinheta */
+.skyline-grid-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 50%, transparent 60%, rgba(4, 8, 20, 0.6) 100%);
+    background-size: 100% 4px, 100% 100%;
+}
+
 .skyline-caption {
-    position: absolute; left: 0; right: 0; top: 0;
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 12px; font-size: 9.5px; letter-spacing: 1px;
-    text-transform: uppercase; pointer-events: none;
-    color: rgba(255,255,255,0.62); text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 12;
+    background: linear-gradient(180deg, rgba(6, 10, 24, 0.88) 0%, rgba(6, 10, 24, 0) 100%);
 }
-#skylineCount { color: var(--secondary); font-weight: 700; }
+.skyline-caption-left, .skyline-caption-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.skyline-beacon {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #00ff88;
+    box-shadow: 0 0 10px #00ff88;
+    animation: beaconBlink 1.4s ease-in-out infinite alternate;
+}
+.skyline-live-tag {
+    font-size: 7.5px;
+    font-weight: 800;
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'Orbitron', monospace;
+}
+.skyline-traffic-tag {
+    font-size: 7.5px;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(0, 212, 255, 0.12);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 4px;
+    padding: 1px 5px;
+}
+#skylineCount {
+    color: var(--secondary);
+    font-weight: 800;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+}
 
 /* Onda de choque quando algo novo é liberado */
 .shockwave {

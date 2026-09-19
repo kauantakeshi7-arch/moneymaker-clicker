@@ -122,10 +122,22 @@
         <!-- PAINEL ESQUERDO: Comando & Terminal Central -->
         <div class="deck-left">
             <div class="skyline-panel">
-                <canvas id="skylineCanvas"></canvas>
+                <canvas id="skylineCanvas" title="Toque no skyline para disparar sinalizadores orbitais"></canvas>
+                <div class="skyline-grid-overlay"></div>
+                <div class="skyline-hud-bracket tl"></div>
+                <div class="skyline-hud-bracket tr"></div>
+                <div class="skyline-hud-bracket bl"></div>
+                <div class="skyline-hud-bracket br"></div>
                 <div class="skyline-caption">
-                    <span id="skylineTitle"><span class="skyline-beacon"></span> SETOR CORPORATIVO 07</span>
-                    <span id="skylineCount">0 construções</span>
+                    <div class="skyline-caption-left">
+                        <span class="skyline-beacon"></span>
+                        <span id="skylineTitle">DISTRITO CENTRAL // SETOR 07</span>
+                        <span class="skyline-live-tag">LIVE</span>
+                    </div>
+                    <div class="skyline-caption-right">
+                        <span class="skyline-traffic-tag">⚡ TRÁFEGO ATIVO</span>
+                        <span id="skylineCount">0 construções</span>
+                    </div>
                 </div>
             </div>
 

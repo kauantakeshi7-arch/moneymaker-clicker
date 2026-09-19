@@ -24,8 +24,7 @@ import {
     openModal, closeModal, exportSave, resetGame,
     buyMoneyUpgrade, buyPrestigeShopItem,
     copySaveToClipboard, importSaveFromText, showOfflineModal
-} from './ui/modals.js';
-import { initSkyline, syncSkyline, drawSkyline, pruneSkyline } from './skyline.js';
+import { initSkyline, syncSkyline, drawSkyline, pruneSkyline, registerSkylineHooks, pulseSkylineClick } from './skyline.js';
 import { ensureActiveContracts, recordContractProgress, updateContractBadge } from './contracts.js';
 import { initNewsTicker } from './news.js';
 import { initMarket, tickMarket, buyShares, sellShares, renderMarketUI, ASSETS } from './market.js';
@@ -180,6 +179,7 @@ function handleMainClick(e) {
     const clickY = (e && e.clientY && e.clientY > 0) ? e.clientY - 20 : (rect.top + rect.height / 2 - 20);
 
     spawnClickParticle(gameState.money - before, clickX, clickY, isCrit);
+    pulseSkylineClick(clickX / window.innerWidth);
     recordContractProgress('clicks', 1);
     recordContractProgress('combo', gameState.combo);
     if (isCrit) {
@@ -348,6 +348,7 @@ function init() {
 
     createUpgradeButtons();
     initChart();
+    registerSkylineHooks(isRpmOverclockActiveState);
     initSkyline();
     initPixiEngine();
     initMarket();
