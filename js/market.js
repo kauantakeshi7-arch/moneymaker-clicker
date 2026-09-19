@@ -5,6 +5,7 @@ import { gameState } from './state.js';
 import { addMoney, getRawDPS, getEffectiveMultiplier } from './economy.js';
 import { formatNumber, showNotification, playCashSound, playCritSound, playSound } from './utils.js';
 import { spawnConfetti } from './vfx.js';
+import { isTechUnlocked } from './techmatrix.js';
 
 const MARKET_SAVE_KEY = 'mm_market_v1';
 
@@ -167,9 +168,15 @@ export function sellShares(assetId, qty = 1) {
     amountToSell = Math.max(0, Math.floor(amountToSell));
     if (amountToSell <= 0) return;
 
-    const totalRevenue = amountToSell * price;
+    let totalRevenue = amountToSell * price;
     const costBasis = amountToSell * a.avgBuyPrice;
-    const profit = totalRevenue - costBasis;
+    let profit = totalRevenue - costBasis;
+
+    if (profit > 0 && isTechUnlocked('f1')) {
+        const bonus = profit * 0.15;
+        totalRevenue += bonus;
+        profit += bonus;
+    }
 
     gameState.money += totalRevenue;
     gameState.totalEarned += Math.max(0, profit);
@@ -184,7 +191,8 @@ export function sellShares(assetId, qty = 1) {
         playCritSound();
         spawnConfetti();
         const pPct = costBasis > 0 ? ((profit / costBasis) * 100).toFixed(1) : '0';
-        showNotification(`LUCRO REALIZADO: +${formatNumber(profit)} (+${pPct}%) em ${a.ticker}!`, '💎', 3500);
+        const hftTag = isTechUnlocked('f1') ? ' [HFT +15%]' : '';
+        showNotification(`LUCRO REALIZADO${hftTag}: +${formatNumber(profit)} (+${pPct}%) em ${a.ticker}!`, '💎', 3500);
     } else {
         playCashSound();
         showNotification(`Vendidas ${amountToSell} × ${a.ticker} por ${formatNumber(totalRevenue)}`, '📉', 2500);

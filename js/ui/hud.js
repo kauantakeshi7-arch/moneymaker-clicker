@@ -117,7 +117,13 @@ export function updateDisplay() {
 
         if (!unlocked) {
             refs.card.classList.add('disabled');
-            setText(refs.lock, `Compre 5 × ${upgrades[i - 1].name}`);
+            const prevOwned = i > 0 ? upgrades[i - 1].owned : 0;
+            const req = 5;
+            setText(refs.lock, `Requer 5 × ${upgrades[i - 1].name} (${prevOwned}/${req})`);
+            if (refs.lockFill) {
+                const pPct = Math.min(100, Math.max(0, (prevOwned / req) * 100));
+                refs.lockFill.style.width = `${pPct.toFixed(1)}%`;
+            }
             wasUnlocked[i] = false;
             continue;
         }
@@ -127,17 +133,20 @@ export function updateDisplay() {
 
         const qty = Math.max(1, getBuyQuantity(i));
         const cost = getBulkCost(i, qty);
-        refs.card.classList.toggle('disabled', gameState.money < cost);
+        const canAfford = gameState.money >= cost;
+        refs.card.classList.toggle('disabled', !canAfford);
         refs.card.classList.toggle('best-buy', i === bestIdx);
+        if (refs.buyBtn) refs.buyBtn.classList.toggle('disabled', !canAfford);
 
-        setText(refs.qty, bulkMode === 'max' ? `×${qty}` : `×${bulkMode}`);
-        setText(refs.cost, formatNumber(cost));
+        setText(refs.qty, bulkMode === 'max' ? `COMPRAR ×${qty}` : `COMPRAR ×${bulkMode}`);
+        setText(refs.cost, `$${formatNumber(cost)}`);
 
         const totalMult = getUpgradeMilestoneMult(i) * getBusinessUpgradeMult(i);
         setText(refs.income,
             `+${formatNumber(getUpgradeIncome(i))}/s${totalMult > 1 ? ' (×' + (+totalMult.toFixed(1)) + ')' : ''}`);
 
         const owned = upgrades[i].owned;
+        if (refs.levelNum) setText(refs.levelNum, owned);
         if (owned > 0) {
             refs.count.style.display = '';
             setText(refs.count, owned);

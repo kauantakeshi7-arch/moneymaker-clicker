@@ -28,6 +28,12 @@ import {
 import {
     initMarket, buyShares, sellShares, ASSETS, getCurrentPrice, applyNewsMarketShock
 } from '../js/market.js';
+import {
+    initTechMatrix, TECH_NODES, isTechUnlocked, canResearchTech, researchTech, resetTechMatrix
+} from '../js/techmatrix.js';
+import {
+    initCrises, CRISES, triggerCrisis, resolveCrisisChoice, dismissCrisis, getActiveCrisis
+} from '../js/crises.js';
 
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
@@ -493,6 +499,81 @@ test('notícia financeira aplica choque percentual no preço do ativo', () => {
     const newPrice = getCurrentPrice('neo');
     assert(newPrice > prevPrice, 'choque positivo deveria elevar o preço', { prevPrice, newPrice });
     assert(close(newPrice, +(prevPrice * 1.20).toFixed(2)), 'cálculo do choque incorreto', { prevPrice, newPrice });
+});
+
+// ===== MATRIZ DE P&D TECNOLÓGICO =====
+
+test('matriz de tecnologia possui 9 nós divididos em 3 ramos de evolução', () => {
+    initTechMatrix();
+    resetTechMatrix();
+    assert(TECH_NODES.length === 9, 'devem existir 9 tecnologias na árvore', TECH_NODES.length);
+    const branches = new Set(TECH_NODES.map(n => n.branch));
+    assert(branches.has('cyber') && branches.has('neural') && branches.has('finance'), 'deve conter os 3 ramos estratégicos');
+});
+
+test('pesquisa tecnológica valida pré-requisitos, deduz fundos e aplica bônus de clique e custo', () => {
+    reset();
+    initTechMatrix();
+    resetTechMatrix();
+
+    // c2 requer c1
+    assert(!isTechUnlocked('c1'), 'c1 deve começar bloqueada');
+    assert(!canResearchTech('c2'), 'c2 não pode ser pesquisada sem c1');
+
+    // c1 requer dinheiro ($1.000)
+    gameState.money = 100;
+    assert(!canResearchTech('c1'), 'não deve poder pesquisar c1 com $100');
+
+    gameState.money = 10000;
+    assert(canResearchTech('c1'), 'deve poder pesquisar c1 com fundos suficientes');
+
+    const clickBefore = getClickValue();
+    researchTech('c1');
+    assert(isTechUnlocked('c1'), 'c1 deve estar desbloqueada após pesquisa');
+    assert(close(gameState.money, 10000 - 1000), 'custo de 1000 não foi descontado');
+
+    // Bônus de c1: +25% no clique
+    upgrades[0].owned = 10;
+    const clickWithC1 = getClickValue();
+    assert(clickWithC1 > 0, 'clique deve ser positivo');
+
+    // a1 dá 8% de desconto em negócios
+    const costBeforeA1 = getUpgradeCost(0);
+    gameState.money = 50000;
+    researchTech('a1');
+    assert(isTechUnlocked('a1'), 'a1 deve estar desbloqueada');
+    const costAfterA1 = getUpgradeCost(0);
+    assert(costAfterA1 < costBeforeA1, 'a1 deveria conceder desconto no custo dos negócios', { costBeforeA1, costAfterA1 });
+
+    resetTechMatrix();
+    assert(!isTechUnlocked('c1') && !isTechUnlocked('a1'), 'resetTechMatrix deve bloquear todos os nós');
+});
+
+// ===== CRISES CORPORATIVAS =====
+
+test('crises corporativas são disparadas com opções estratégicas válidas', () => {
+    initCrises();
+    assert(CRISES.length >= 3, 'devem existir pelo menos 3 crises configuradas', CRISES.length);
+    for (const c of CRISES) {
+        assert(c.optionA && c.optionB, 'toda crise deve ter opção A e opção B', c.id);
+        assert(typeof c.optionA.action === 'function', 'ação A deve ser função');
+        assert(typeof c.optionB.action === 'function', 'ação B deve ser função');
+    }
+
+    const testCrisis = CRISES[0];
+    triggerCrisis(testCrisis);
+    assert(getActiveCrisis() === testCrisis, 'crise ativa deve corresponder à disparada');
+
+    // Resolver opção A
+    gameState.money = 5000;
+    resolveCrisisChoice('A');
+    assert(getActiveCrisis() === null, 'crise deve ser finalizada após escolha');
+
+    // Descarte manual
+    triggerCrisis(testCrisis);
+    assert(getActiveCrisis() !== null, 'crise deve estar ativa');
+    dismissCrisis();
+    assert(getActiveCrisis() === null, 'crise deve estar nula após descarte');
 });
 
 /** Roda tudo e devolve o relatório. */

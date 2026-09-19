@@ -29,6 +29,8 @@ import { initSkyline, syncSkyline, drawSkyline, pruneSkyline } from './skyline.j
 import { ensureActiveContracts, recordContractProgress, updateContractBadge } from './contracts.js';
 import { initNewsTicker } from './news.js';
 import { initMarket, tickMarket, buyShares, sellShares, renderMarketUI, ASSETS } from './market.js';
+import { initTechMatrix, renderTechMatrixUI, researchTech, canResearchTech } from './techmatrix.js';
+import { initCrises, tickCrises, resolveCrisisChoice, dismissCrisis } from './crises.js';
 
 // Namespaces só para o console de depuração (ver `exposeDebugApi` no fim).
 import * as config from './config.js';
@@ -38,6 +40,60 @@ import * as uiCards from './ui/businesses.js';
 import * as uiModals from './ui/modals.js';
 import * as utils from './utils.js';
 import * as skyline from './skyline.js';
+
+// ============ REATOR CENTRAL & TACÔMETRO RPM ============
+const recentClicks = [];
+const RPM_WINDOW_MS = 1500;
+let isRpmOverclockActive = false;
+
+export function isRpmOverclockActiveState() {
+    return isRpmOverclockActive;
+}
+
+function updateRPM(now) {
+    while (recentClicks.length > 0 && now - recentClicks[0] > RPM_WINDOW_MS) {
+        recentClicks.shift();
+    }
+    const cps = recentClicks.length / (RPM_WINDOW_MS / 1000);
+    const wasOverclock = isRpmOverclockActive;
+    isRpmOverclockActive = (cps >= 6.0);
+
+    if (isRpmOverclockActive && !wasOverclock) {
+        playCritSound();
+        shockwave('#ff0055');
+        showNotification('NÚCLEO EM SOBRECARGA! +50% PODER DE CLIQUE!', '⚡', 2500);
+    }
+
+    if (typeof document === 'undefined') return;
+
+    const rpmValEl = document.getElementById('rpmVal');
+    if (rpmValEl) rpmValEl.textContent = cps.toFixed(1);
+
+    const tachFill = document.getElementById('tachFill');
+    if (tachFill) {
+        const maxCircumference = 578.05;
+        const progress = Math.min(1, cps / 10.0);
+        tachFill.style.strokeDashoffset = (maxCircumference * (1 - progress)).toString();
+        tachFill.classList.toggle('overclock', isRpmOverclockActive);
+    }
+
+    const reactorStatus = document.getElementById('reactorStatus');
+    const reactorStatusText = document.getElementById('reactorStatusText');
+    if (reactorStatus && reactorStatusText) {
+        if (isRpmOverclockActive) {
+            reactorStatus.className = 'reactor-status-banner status-overclock';
+            reactorStatusText.textContent = 'OVERCLOCK ATIVO (+50% CLIQUE)';
+        } else {
+            reactorStatus.className = 'reactor-status-banner status-normal';
+            reactorStatusText.textContent = 'POTÊNCIA NOMINAL';
+        }
+    }
+
+    const clickBtn = el.clickButton || document.getElementById('clickButton');
+    if (clickBtn) {
+        clickBtn.classList.toggle('rpm-overclock', isRpmOverclockActive);
+    }
+}
 
 // ============ AÇÕES DA INTERFACE ============
 // Um mapa de nome → função, acionado por `data-action` no HTML. Evita
@@ -65,6 +121,7 @@ const ACTIONS = {
     openModal: target => {
         openModal(target);
         if (target === 'marketModal') renderMarketUI();
+        if (target === 'techMatrixModal') renderTechMatrixUI();
     },
     closeModal: target => closeModal(target),
     setBulk: target => setBulkMode(target === 'max' ? 'max' : Number(target)),
@@ -79,6 +136,9 @@ const ACTIONS = {
         const [id, q] = target.split(':');
         sellShares(id, q);
     },
+    researchTech: target => researchTech(target),
+    resolveCrisis: target => resolveCrisisChoice(target),
+    dismissCrisis: () => dismissCrisis(),
     exportSave,
     importSave: () => (el.importInput || document.getElementById('importInput')).click(),
     copySave: copySaveToClipboard,
@@ -105,6 +165,9 @@ document.addEventListener('click', (e) => {
 // ============ CLIQUE PRINCIPAL ============
 function handleMainClick(e) {
     if (document.querySelector('.modal.active')) return;
+
+    const now = performance.now();
+    recentClicks.push(now);
 
     const before = gameState.money;
     const base = getClickValue();
@@ -268,7 +331,7 @@ function init() {
         b.addEventListener('mouseenter', () => playHoverSound());
     });
 
-    registerAbilityHooks(getActiveAbilityMultiplier, isHyperClickActive);
+    registerAbilityHooks(getActiveAbilityMultiplier, isHyperClickActive, isRpmOverclockActiveState);
 
     const coinBtn = el.clickButton || document.getElementById('clickButton');
     if (coinBtn) {
@@ -288,6 +351,8 @@ function init() {
     initSkyline();
     initPixiEngine();
     initMarket();
+    initTechMatrix();
+    initCrises();
     updateDisplay();
     updateAbilitiesUI();
 
@@ -364,6 +429,8 @@ export function simulationTick() {
     runAI();
     checkAchievements(showAchievementBadge);
     tickMarket(now);
+    tickCrises(deltaMs);
+    updateRPM(now);
 
     // 60 amostras a cada 500ms = histórico fiel de 30s de renda
     chartSampleTimer += deltaMs;
@@ -400,6 +467,26 @@ function renderLoop(now) {
     if (el.clickButton) {
         el.clickButton.classList.toggle('fever-active', isFeverActive());
     }
+
+    const clickPowerEl = document.getElementById('clickPowerDisplay');
+    if (clickPowerEl) {
+        clickPowerEl.textContent = `+$${formatNumber(getClickValue())}`;
+    }
+
+    const techBadge = document.getElementById('techBadge');
+    if (techBadge) {
+        let availCount = 0;
+        ['c1', 'c2', 'c3', 'a1', 'a2', 'a3', 'f1', 'f2', 'f3'].forEach(id => {
+            if (canResearchTech(id)) availCount++;
+        });
+        if (availCount > 0) {
+            techBadge.style.display = 'flex';
+            techBadge.textContent = availCount;
+        } else {
+            techBadge.style.display = 'none';
+        }
+    }
+
     drawSkyline(now || performance.now());
     requestAnimationFrame(renderLoop);
 }

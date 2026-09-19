@@ -3,19 +3,22 @@
 // guarda dados (state.js) e os números de balanceamento vêm de config.js.
 
 import {
-    upgrades, MONEY_CAP, COST_GROWTH, MILESTONE_TIERS, MONEY_UPGRADES_BY_ID,
-    ACHIEVEMENTS, PRESTIGE_SHOP, COMBO_MILESTONES, FEVER_COMBO_THRESHOLD,
-    COMBO_TIMEOUT_MS, BUSINESS_UNLOCK_THRESHOLD, BASE_CRIT_CHANCE, BASE_CRIT_MULTIPLIER,
-    BASE_CLICK_PERCENT, MANAGER_COST_FACTOR, OFFLINE_CAP_SECONDS,
-    OFFLINE_BASE_EFFICIENCY, getPrestigeCostForLevel, getPrestigeMultiplierForLevel
+    upgrades, MONEY_UPGRADES, MONEY_UPGRADES_BY_ID, COST_GROWTH,
+    MILESTONE_TIERS, BUSINESS_UNLOCK_THRESHOLD,
+    FEVER_COMBO_THRESHOLD, COMBO_MILESTONES, COMBO_TIMEOUT_MS,
+    BASE_CRIT_CHANCE, BASE_CRIT_MULTIPLIER, BASE_CLICK_PERCENT,
+    MANAGER_COST_FACTOR, OFFLINE_CAP_SECONDS, OFFLINE_BASE_EFFICIENCY,
+    MONEY_CAP, getPrestigeMultiplierForLevel, getPrestigeCostForLevel,
+    ACHIEVEMENTS, PRESTIGE_SHOP
 } from './config.js';
 import { gameState } from './state.js';
-import { formatNumber, showNotification, playSound } from './utils.js';
+import { formatNumber, showNotification, playSound, shockwave } from './utils.js';
 import { spawnConfetti } from './vfx.js';
+import { isTechUnlocked } from './techmatrix.js';
 
-// ============ EFEITOS DOS UPGRADES DE RUN ============
-// Um acumulador por forma de combinar: produto, soma, presença, último valor.
-
+// ============ EFEITOS DE UPGRADES DE RUN ============
+// Agrupa os upgrades comprados na run atual pelo tipo do efeito, para não
+// recalcular produtos e somas a cada chamada de função.
 function runEffects(type) {
     const out = [];
     for (const id of gameState.runUpgrades) {
@@ -65,10 +68,12 @@ export function isFeverActive() {
 // ============ MULTIPLICADORES ============
 let activeAbilityMultiplierFn = () => 1;
 let hyperClickActiveFn = () => false;
+let isRpmOverclockActiveFn = () => false;
 
-export function registerAbilityHooks(getMultFn, isCritFn) {
+export function registerAbilityHooks(getMultFn, isCritFn, isRpmFn) {
     if (getMultFn) activeAbilityMultiplierFn = getMultFn;
     if (isCritFn) hyperClickActiveFn = isCritFn;
+    if (isRpmFn) isRpmOverclockActiveFn = isRpmFn;
 }
 
 // Decomposto em fatores nomeados: é a fonte única da verdade e aparece assim
@@ -98,18 +103,19 @@ export function getClickPercent() {
 
 export function getCritChance() {
     if (hyperClickActiveFn()) return 1.0;
-    const base = BASE_CRIT_CHANCE + gameState.prestigeShopLevels.critChance * 0.02;
-    return Math.min(0.75, base + getRunUpgradeSum('critChanceAdd'));
+    const base = BASE_CRIT_CHANCE + gameState.prestigeShopLevels.critChance * 0.02 + (isTechUnlocked('c3') ? 0.05 : 0);
+    return Math.min(0.85, base + getRunUpgradeSum('critChanceAdd'));
 }
 
 export function getCritMultiplier() {
-    return BASE_CRIT_MULTIPLIER * getRunUpgradeProduct('critMult');
+    return BASE_CRIT_MULTIPLIER * getRunUpgradeProduct('critMult') * (isTechUnlocked('c3') ? 1.5 : 1);
 }
 
 // ============ NEGÓCIOS ============
 export function getUpgradeCost(idx) {
     const u = upgrades[idx];
-    return Math.min(MONEY_CAP, u.baseCost * Math.pow(COST_GROWTH, Math.min(u.owned, 4500)));
+    const techDiscount = isTechUnlocked('a1') ? 0.92 : 1;
+    return Math.min(MONEY_CAP, u.baseCost * Math.pow(COST_GROWTH, Math.min(u.owned, 4500)) * techDiscount);
 }
 
 /** Custo de comprar `qty` unidades de uma vez (soma da série geométrica). */
@@ -149,7 +155,8 @@ export function getBusinessUpgradeMult(idx) {
 }
 
 export function getUpgradeIncome(idx) {
-    return upgrades[idx].baseIncome * getUpgradeMilestoneMult(idx) * getBusinessUpgradeMult(idx);
+    const managerBonus = (isTechUnlocked('a2') && upgrades[idx].manager) ? 1.25 : 1;
+    return upgrades[idx].baseIncome * getUpgradeMilestoneMult(idx) * getBusinessUpgradeMult(idx) * managerBonus;
 }
 
 export function getRawDPS() {
@@ -160,7 +167,13 @@ export function getRawDPS() {
 
 /** Clique vale uma fração da renda passiva, então nunca fica obsoleto. */
 export function getClickValue() {
-    return Math.max(1, getRawDPS() * getClickPercent());
+    let base = Math.max(1, getRawDPS() * getClickPercent());
+    if (isTechUnlocked('c1')) base *= 1.25;
+    if (isRpmOverclockActiveFn()) {
+        const rpmMult = isTechUnlocked('c2') ? 2.0 : 1.5;
+        base *= rpmMult;
+    }
+    return base;
 }
 
 export function getManagerCost(idx) {
@@ -192,7 +205,9 @@ export function prestigePointsForTotal(totalEarned) {
 }
 
 export function pendingPrestigePoints() {
-    return Math.max(0, prestigePointsForTotal(gameState.totalEarned) - gameState.lifetimePrestigePoints);
+    const base = Math.max(0, prestigePointsForTotal(gameState.totalEarned) - gameState.lifetimePrestigePoints);
+    if (isTechUnlocked('f3')) return Math.floor(base * 1.25);
+    return base;
 }
 
 // ============ GANHO DE DINHEIRO ============
@@ -245,7 +260,8 @@ export function applyOfflineProgress(lastSaveTime) {
     const seconds = Math.min(OFFLINE_CAP_SECONDS, Math.max(0, (Date.now() - lastSaveTime) / 1000));
     if (seconds <= 5) return { earnings: 0, seconds: 0 };
 
-    const efficiency = Math.min(1, OFFLINE_BASE_EFFICIENCY + gameState.prestigeShopLevels.offlineEfficiency * 0.1);
+    let efficiency = Math.min(1, OFFLINE_BASE_EFFICIENCY + gameState.prestigeShopLevels.offlineEfficiency * 0.1);
+    if (isTechUnlocked('a3')) efficiency = Math.max(efficiency, 0.80);
     const earnings = getRawDPS() * getEffectiveMultiplier() * seconds * efficiency;
     if (earnings <= 0) return { earnings: 0, seconds };
 

@@ -115,6 +115,8 @@
     <div class="news-ticker-track"><span id="newsTickerText">Carregando cotações e manchetes do mercado financeiro...</span></div>
 </div>
 
+<div id="crisisBanner" class="crisis-banner-wrap" style="display:none;"></div>
+
 <main>
     <div class="dashboard-deck">
         <!-- PAINEL ESQUERDO: Comando & Terminal Central -->
@@ -122,29 +124,54 @@
             <div class="skyline-panel">
                 <canvas id="skylineCanvas"></canvas>
                 <div class="skyline-caption">
-                    <span id="skylineTitle">Seu império</span>
+                    <span id="skylineTitle"><span class="skyline-beacon"></span> SETOR CORPORATIVO 07</span>
                     <span id="skylineCount">0 construções</span>
                 </div>
             </div>
 
             <div class="click-section">
-                <div class="total-earned">
-                    <div class="total-earned-label">Total acumulado</div>
-                    <div id="totalEarned" class="total-earned-value">$0</div>
+                <!-- TELEMETRIA DO REATOR -->
+                <div class="reactor-telemetry-hud">
+                    <div class="telemetry-item">
+                        <div class="telemetry-label">LUCRO ACUMULADO</div>
+                        <div id="totalEarned" class="telemetry-value">$0</div>
+                    </div>
+                    <div class="telemetry-divider"></div>
+                    <div class="telemetry-item">
+                        <div class="telemetry-label">PODER DE CLIQUE</div>
+                        <div id="clickPowerDisplay" class="telemetry-value green">+$1.00</div>
+                    </div>
                 </div>
 
-                <div class="click-btn-wrap">
-                    <span class="click-ring click-ring-1"></span>
-                    <span class="click-ring click-ring-2"></span>
-                    <button id="clickButton" aria-label="Ganhar dinheiro">
-                        <span class="coin-sheen"></span>
-                    </button>
+                <!-- NÚCLEO DO REATOR COM TACÔMETRO DE RPM -->
+                <div class="reactor-core-wrap">
+                    <div class="reactor-tachometer-wrap">
+                        <svg class="reactor-tachometer-svg" viewBox="0 0 220 220">
+                            <circle class="tach-track" cx="110" cy="110" r="92"></circle>
+                            <circle class="tach-fill" id="tachFill" cx="110" cy="110" r="92"></circle>
+                        </svg>
+                        <div class="reactor-rpm-display" id="reactorRpmDisplay">
+                            <span class="rpm-val" id="rpmVal">0.0</span>
+                            <span class="rpm-unit">CPS</span>
+                        </div>
+                        <div class="click-btn-wrap">
+                            <span class="click-ring click-ring-1"></span>
+                            <span class="click-ring click-ring-2"></span>
+                            <button id="clickButton" aria-label="Ganhar dinheiro">
+                                <span class="coin-sheen"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="reactor-status-banner status-normal" id="reactorStatus">
+                        <span class="status-indicator">●</span>
+                        <span id="reactorStatusText">POTÊNCIA NOMINAL</span>
+                    </div>
                 </div>
 
                 <div class="click-meta">
-                    <span><svg class="icon"><use href="#i-cursor"/></svg><span id="clickCount">0</span></span>
+                    <span><svg class="icon"><use href="#i-cursor"/></svg><span id="clickCount">0</span> cliques</span>
                     <span class="click-meta-sep"></span>
-                    <span><svg class="icon"><use href="#i-flame"/></svg>×<span id="comboDisplay">1</span></span>
+                    <span><svg class="icon"><use href="#i-flame"/></svg>Combo <span id="comboDisplay">1</span>x</span>
                 </div>
 
                 <!-- HABILIDADES ESTRATÉGICAS DO MAGNATA -->
@@ -153,28 +180,34 @@
                         <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_overclock"></div></div>
                         <span class="ability-icon">⚡</span>
                         <div class="ability-info">
-                            <span class="ability-name">Sobrecarga</span>
-                            <span class="ability-sub">×2 DPS</span>
+                            <div class="ability-top">
+                                <span class="ability-name">Sobrecarga</span>
+                                <span class="ability-key" id="abilityTimer_overclock">[1]</span>
+                            </div>
+                            <span class="ability-sub">×2 DPS • 15s</span>
                         </div>
-                        <span class="ability-key" id="abilityTimer_overclock">[1]</span>
                     </button>
                     <button class="ability-btn" id="abilityBtn_hyperclick" data-action="triggerAbility" data-target="hyperclick" title="[2] Hiper Foco: 100% de chance de clique crítico por 12s">
                         <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_hyperclick"></div></div>
                         <span class="ability-icon">🎯</span>
                         <div class="ability-info">
-                            <span class="ability-name">Hiper Foco</span>
+                            <div class="ability-top">
+                                <span class="ability-name">Hiper Foco</span>
+                                <span class="ability-key" id="abilityTimer_hyperclick">[2]</span>
+                            </div>
                             <span class="ability-sub">100% Crítico</span>
                         </div>
-                        <span class="ability-key" id="abilityTimer_hyperclick">[2]</span>
                     </button>
-                    <button class="ability-btn" id="abilityBtn_dividend" data-action="triggerAbility" data-target="dividend" title="[3] Dividendos: Injeção imediata de 45s de renda no caixa">
+                    <button class="ability-btn" id="abilityBtn_dividend" data-action="triggerAbility" data-target="dividend" title="[3] Dividendos: Injeção imediata de caixa">
                         <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_dividend"></div></div>
                         <span class="ability-icon">💰</span>
                         <div class="ability-info">
-                            <span class="ability-name">Dividendos</span>
+                            <div class="ability-top">
+                                <span class="ability-name">Dividendos</span>
+                                <span class="ability-key" id="abilityTimer_dividend">[3]</span>
+                            </div>
                             <span class="ability-sub">+45s Caixa</span>
                         </div>
-                        <span class="ability-key" id="abilityTimer_dividend">[3]</span>
                     </button>
                 </div>
 
@@ -231,25 +264,32 @@
             </div>
             <div class="upgrades-grid" id="upgradesContainer"></div>
 
-            <div class="controls">
-                <button class="tool-btn tool-prestige" id="prestigeBtn" data-action="prestige" disabled>
+            <div class="controls cyber-dock">
+                <button class="tool-btn tool-prestige" id="prestigeBtn" data-action="prestige" disabled title="Prestígio e Ascensão Cósmica">
                     <svg class="icon"><use href="#i-star"/></svg><span>Prestígio</span>
                 </button>
-                <button class="tool-btn" data-action="openModal" data-target="upgradeShopModal">
+                <button class="tool-btn" data-action="openModal" data-target="techMatrixModal" title="Árvore de Pesquisa Tecnológica P&D">
+                    <span style="font-size: 16px; line-height: 1;">💡</span><span>P&D Tech</span>
+                    <span class="badge" id="techBadge" style="display:none;">0</span>
+                </button>
+                <button class="tool-btn" data-action="openModal" data-target="upgradeShopModal" title="Upgrades da Run Atual">
                     <svg class="icon"><use href="#i-bolt"/></svg><span>Upgrades</span>
                     <span class="badge badge-green" id="upgradeBadge" style="display:none;">0</span>
                 </button>
-                <button class="tool-btn" data-action="openModal" data-target="prestigeShopModal">
-                    <svg class="icon"><use href="#i-cart"/></svg><span>Loja</span>
+                <button class="tool-btn" data-action="openModal" data-target="marketModal" title="Bolsa de Valores Cyberpunk">
+                    <span style="font-size: 16px; line-height: 1;">📈</span><span>Bolsa</span>
+                </button>
+                <button class="tool-btn" data-action="openModal" data-target="prestigeShopModal" title="Loja Cósmica de Prestígio">
+                    <svg class="icon"><use href="#i-cart"/></svg><span>Loja 💎</span>
                     <span class="badge" id="prestigePointBadge" style="display:none;">0</span>
                 </button>
-                <button class="tool-btn" data-action="openModal" data-target="economyModal">
+                <button class="tool-btn" data-action="openModal" data-target="economyModal" title="Modelagem Econômica e ROI">
                     <svg class="icon"><use href="#i-ledger"/></svg><span>Economia</span>
                 </button>
-                <button class="tool-btn" data-action="openModal" data-target="statsModal">
+                <button class="tool-btn" data-action="openModal" data-target="statsModal" title="Estatísticas Completas">
                     <svg class="icon"><use href="#i-pie"/></svg><span>Stats</span>
                 </button>
-                <button class="tool-btn" data-action="openModal" data-target="settingsModal">
+                <button class="tool-btn" data-action="openModal" data-target="settingsModal" title="Configurações do Jogo">
                     <svg class="icon"><use href="#i-gear"/></svg><span>Ajustes</span>
                 </button>
             </div>
@@ -499,6 +539,28 @@
             <button class="btn" data-action="closeModal" data-target="settingsModal">Fechar</button>
         </div>
         <input type="file" id="importInput" style="display:none;" accept=".txt">
+    </div>
+</div>
+
+<div id="techMatrixModal" class="modal">
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash_upgrades.jpg" alt="Matriz de Pesquisa Tecnológica P&D" class="modal-hero-bg" style="filter: brightness(0.8) hue-rotate(280deg) contrast(1.2);">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title">💡 MATRIZ DE P&D TECNOLÓGICO</div>
+                    <div class="modal-hero-sub">Árvore de Inovação: Cibernética, IA Autônoma & Alta Finança</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body-pad">
+            <div class="modal-hint">
+                Pesquise tecnologias avançadas para desbloquear saltos de eficiência permanentes no império.
+            </div>
+            <div id="techMatrixContainer" class="modal-scroll"></div>
+            <button class="btn" data-action="closeModal" data-target="techMatrixModal">Fechar Matriz</button>
+        </div>
     </div>
 </div>
 

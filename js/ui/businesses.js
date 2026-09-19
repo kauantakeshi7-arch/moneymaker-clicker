@@ -27,6 +27,16 @@ export function setBulkMode(mode) {
     });
 }
 
+export const BIZ_LORE = [
+    { title: 'Neural Freelancer', tag: 'Netrunner de Garagem', color: '#00ff88' },
+    { title: 'Synthetix AI', tag: 'Venture Capital & Bots', color: '#00d4ff' },
+    { title: 'RoboForge Corp', tag: 'Linha Robótica Autônoma', color: '#ffaa00' },
+    { title: 'Aegis Wall Street', tag: 'Alta Finança & Hedge Funds', color: '#ffd700' },
+    { title: 'OmniStream Media', tag: 'Holonet & Transmissão', color: '#b366ff' },
+    { title: 'Aether Orbital Vault', tag: 'Custódia Quântica Espacial', color: '#38bdf8' },
+    { title: 'Apex Syndicate', tag: 'Monopólio Interplanetário', color: '#ff3366' }
+];
+
 // Referências dos filhos de cada card, guardadas na criação
 export let cardRefs = [];
 
@@ -36,34 +46,53 @@ export function createUpgradeButtons() {
     cardRefs = [];
 
     upgrades.forEach((u, i) => {
+        const lore = BIZ_LORE[i] || { title: u.name, tag: 'Empreendimento', color: '#00d4ff' };
         const card = document.createElement('div');
         card.id = `upgrade-${i}`;
-        card.className = `upgrade-btn biz-tier-${i}`;
+        card.className = `upgrade-btn biz-card biz-tier-${i}`;
         card.tabIndex = 0;
         card.setAttribute('role', 'button');
         card.innerHTML = `
-            <div class="upgrade-qty"></div>
-            <div class="biz-header-row">
-                <div class="biz-icon-badge"><svg class="upgrade-icon"><use href="#${u.glyph}"/></svg></div>
-                <div class="biz-title-wrap">
-                    <div class="upgrade-name">${u.name}</div>
+            <div class="biz-card-left">
+                <div class="biz-icon-badge">
+                    <svg class="upgrade-icon"><use href="#${u.glyph}"/></svg>
+                </div>
+                <div class="biz-level-pill">LVL <span class="biz-level-num">0</span></div>
+            </div>
+            <div class="biz-card-center">
+                <div class="biz-meta-row">
+                    <div class="biz-name-box">
+                        <span class="upgrade-name">${lore.title}</span>
+                        <span class="biz-tag">${lore.tag}</span>
+                    </div>
                     <div class="biz-tier-badge">NÍVEL 0</div>
                 </div>
+                <div class="biz-income-row">
+                    <span class="upgrade-income">+${formatNumber(getUpgradeIncome(i))}/s</span>
+                </div>
+                <div class="biz-cycle-wrap">
+                    <div class="biz-cycle-bar"><div class="biz-cycle-fill"></div></div>
+                </div>
+                <div class="biz-milestone-wrap">
+                    <div class="biz-milestone-bar"><div class="biz-milestone-fill"></div></div>
+                    <span class="biz-milestone-label">0/10 (Faltam 10 p/ ×2)</span>
+                </div>
             </div>
-            <div class="biz-cycle-wrap">
-                <div class="biz-cycle-bar"><div class="biz-cycle-fill"></div></div>
-            </div>
-            <div class="upgrade-cost">${formatNumber(getUpgradeCost(i))}</div>
-            <div class="upgrade-income">+${formatNumber(getUpgradeIncome(i))}/s</div>
-            <div class="biz-milestone-wrap">
-                <div class="biz-milestone-bar"><div class="biz-milestone-fill"></div></div>
-                <span class="biz-milestone-label">0/10</span>
+            <div class="biz-card-right">
+                <div class="biz-buy-action" role="button" tabindex="-1">
+                    <span class="upgrade-qty">COMPRAR ×1</span>
+                    <span class="upgrade-cost">$${formatNumber(getUpgradeCost(i))}</span>
+                </div>
+                <button class="manager-btn" title="Gerente automatiza a compra deste negócio"></button>
             </div>
             <div class="upgrade-count" style="display:none;"></div>
-            <button class="manager-btn" title="Gerente automatiza a compra deste negócio"></button>
             <div class="upgrade-lock-overlay">
-                <svg class="icon icon-lg"><use href="#i-lock"/></svg>
-                <div class="upgrade-lock"></div>
+                <div class="lock-shield"><svg class="icon icon-lg"><use href="#i-lock"/></svg></div>
+                <div class="lock-content">
+                    <div class="lock-title">PROJETO CONFIDENCIAL</div>
+                    <div class="upgrade-lock">Compre 5 × ${upgrades[i - 1]?.name || ''}</div>
+                    <div class="lock-progress-bar"><div class="lock-progress-fill"></div></div>
+                </div>
             </div>
         `;
         card.addEventListener('click', (e) => {
@@ -87,12 +116,15 @@ export function createUpgradeButtons() {
             cost: card.querySelector('.upgrade-cost'),
             income: card.querySelector('.upgrade-income'),
             count: card.querySelector('.upgrade-count'),
+            levelNum: card.querySelector('.biz-level-num'),
             lock: card.querySelector('.upgrade-lock'),
+            lockFill: card.querySelector('.lock-progress-fill'),
             manager: card.querySelector('.manager-btn'),
             milestoneFill: card.querySelector('.biz-milestone-fill'),
             milestoneLabel: card.querySelector('.biz-milestone-label'),
             cycleFill: card.querySelector('.biz-cycle-fill'),
-            masteryBadge: card.querySelector('.biz-tier-badge')
+            masteryBadge: card.querySelector('.biz-tier-badge'),
+            buyBtn: card.querySelector('.biz-buy-action')
         };
         cardRefs.push(refs);
         refs.manager.addEventListener('click', (e) => {

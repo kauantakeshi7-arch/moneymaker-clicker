@@ -5,6 +5,7 @@ import { gameState } from './state.js';
 import { getRawDPS, getEffectiveMultiplier, addMoney } from './economy.js';
 import { formatNumber, showNotification, playSound, shockwave } from './utils.js';
 import { spawnConfetti, spawnMoneyRain } from './vfx.js';
+import { isTechUnlocked } from './techmatrix.js';
 
 export const ABILITIES = [
     {
@@ -90,13 +91,14 @@ export function triggerAbility(id) {
         playSound(1200, 250);
     } else if (id === 'dividend') {
         const dps = getRawDPS() * getEffectiveMultiplier();
-        const payout = Math.max(100, dps * 45);
+        const durationSecs = isTechUnlocked('f2') ? 60 : 45;
+        const payout = Math.max(100, dps * durationSecs);
         addMoney(payout);
         spawnMoneyRain(28);
         spawnConfetti();
         shockwave('#00ff88');
         playSound(1600, 350);
-        showNotification(`💰 DIVIDENDOS PAGOS: +${formatNumber(payout)}!`, '💰', 4000);
+        showNotification(`💰 DIVIDENDOS PAGOS: +${formatNumber(payout)} (${durationSecs}s de produção)!`, '💰', 4000);
     }
 
     updateAbilitiesUI();
