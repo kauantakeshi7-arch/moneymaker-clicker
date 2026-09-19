@@ -1,6 +1,6 @@
 // Render de um frame: cabeçalho, progresso e estado dos cards.
 
-import { upgrades, MONEY_UPGRADES, getPrestigeCostForLevel, MILESTONE_TIERS } from '../config.js';
+import { upgrades, MONEY_UPGRADES, getPrestigeCostForLevel, MILESTONE_TIERS, COMBO_TIMEOUT_MS } from '../config.js';
 import { gameState } from '../state.js';
 import { formatNumber, playSound, showBanner, shockwave } from '../utils.js';
 import { spawnConfetti } from '../vfx.js';
@@ -42,7 +42,7 @@ export function updateDisplay() {
     setText(el.moneyDisplay, formatNumber(gameState.money));
     setText(el.totalEarned, formatNumber(gameState.totalEarned));
     setText(el.clickCount, gameState.clickCount);
-    setText(el.comboDisplay, gameState.combo);
+    setText(el.comboDisplay, `${gameState.combo}x`);
     setText(el.comboValue, `×${Math.floor(gameState.combo)}`);
     setText(el.multValue, mult.toFixed(2) + 'x');
     setText(el.mpsDisplay, '+' + formatNumber(dps) + '/s');
@@ -55,10 +55,20 @@ export function updateDisplay() {
 
     const comboClass = gameState.combo >= 15 ? 'combo-hot' : gameState.combo >= 5 ? 'combo-mid' : '';
     for (const node of [el.comboDisplay, el.comboValue]) {
-        if (node._comboClass === comboClass) continue;
+        if (!node || node._comboClass === comboClass) continue;
         node.classList.remove('combo-mid', 'combo-hot');
         if (comboClass) node.classList.add(comboClass);
         node._comboClass = comboClass;
+    }
+
+    if (el.comboBarFill) {
+        if (gameState.combo > 1) {
+            const elapsed = Date.now() - gameState.lastClickTime;
+            const pct = Math.max(0, Math.min(100, (1 - (elapsed / COMBO_TIMEOUT_MS)) * 100));
+            el.comboBarFill.style.width = `${pct.toFixed(1)}%`;
+        } else {
+            el.comboBarFill.style.width = '0%';
+        }
     }
 
     const nextCost = getPrestigeCostForLevel(gameState.prestigeLevel + 1);

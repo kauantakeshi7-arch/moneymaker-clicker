@@ -472,7 +472,7 @@ function renderLoop(now) {
 
     const clickPowerEl = document.getElementById('clickPowerDisplay');
     if (clickPowerEl) {
-        clickPowerEl.textContent = `+$${formatNumber(getClickValue())}`;
+        clickPowerEl.textContent = `+${formatNumber(getClickValue())}`;
     }
 
     const techBadge = document.getElementById('techBadge');

@@ -141,11 +141,18 @@
             </div>
 
             <div class="click-section">
+                <!-- FRAME TÁTICO SCI-FI -->
+                <div class="reactor-hud-bracket tl"></div>
+                <div class="reactor-hud-bracket tr"></div>
+                <div class="reactor-hud-bracket bl"></div>
+                <div class="reactor-hud-bracket br"></div>
+                <div class="reactor-grid-pattern"></div>
+
                 <!-- TELEMETRIA DO REATOR -->
                 <div class="reactor-telemetry-hud">
                     <div class="telemetry-item">
                         <div class="telemetry-label">LUCRO ACUMULADO</div>
-                        <div id="totalEarned" class="telemetry-value">$0</div>
+                        <div id="totalEarned" class="telemetry-value gold">$0</div>
                     </div>
                     <div class="telemetry-divider"></div>
                     <div class="telemetry-item">
@@ -157,20 +164,23 @@
                 <!-- NÚCLEO DO REATOR COM TACÔMETRO DE RPM -->
                 <div class="reactor-core-wrap">
                     <div class="reactor-tachometer-wrap">
+                        <div class="reactor-plasma-halo"></div>
                         <svg class="reactor-tachometer-svg" viewBox="0 0 220 220">
+                            <circle class="tach-track-bg" cx="110" cy="110" r="98"></circle>
                             <circle class="tach-track" cx="110" cy="110" r="92"></circle>
                             <circle class="tach-fill" id="tachFill" cx="110" cy="110" r="92"></circle>
                         </svg>
-                        <div class="reactor-rpm-display" id="reactorRpmDisplay">
-                            <span class="rpm-val" id="rpmVal">0.0</span>
-                            <span class="rpm-unit">CPS</span>
-                        </div>
                         <div class="click-btn-wrap">
                             <span class="click-ring click-ring-1"></span>
                             <span class="click-ring click-ring-2"></span>
+                            <span class="click-ring click-ring-3"></span>
                             <button id="clickButton" aria-label="Ganhar dinheiro">
                                 <span class="coin-sheen"></span>
                             </button>
+                        </div>
+                        <div class="reactor-rpm-display" id="reactorRpmDisplay">
+                            <span class="rpm-val" id="rpmVal">0.0</span>
+                            <span class="rpm-unit">CPS</span>
                         </div>
                     </div>
                     <div class="reactor-status-banner status-normal" id="reactorStatus">
@@ -179,15 +189,28 @@
                     </div>
                 </div>
 
+                <!-- MEDIDOR DE COMBO & CLIQUES -->
                 <div class="click-meta">
-                    <span><svg class="icon"><use href="#i-cursor"/></svg><span id="clickCount">0</span> cliques</span>
-                    <span class="click-meta-sep"></span>
-                    <span><svg class="icon"><use href="#i-flame"/></svg>Combo <span id="comboDisplay">1</span>x</span>
+                    <div class="click-stat-chip">
+                        <svg class="icon"><use href="#i-cursor"/></svg>
+                        <span><span id="clickCount">0</span> cliques</span>
+                    </div>
+                    <div class="combo-overdrive-box">
+                        <div class="combo-overdrive-head">
+                            <span class="combo-flame-icon">🔥</span>
+                            <span class="combo-title">COMBO</span>
+                            <span class="combo-val" id="comboDisplay">1x</span>
+                        </div>
+                        <div class="combo-bar-track">
+                            <div class="combo-bar-fill" id="comboBarFill"></div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- HABILIDADES ESTRATÉGICAS DO MAGNATA -->
+                <!-- CARTUCHOS TÁTICOS DO MAGNATA -->
                 <div class="tactical-abilities-strip">
-                    <button class="ability-btn" id="abilityBtn_overclock" data-action="triggerAbility" data-target="overclock" title="[1] Sobrecarga: Renda passiva ×2 por 15s">
+                    <button class="ability-btn ability-overclock" id="abilityBtn_overclock" data-action="triggerAbility" data-target="overclock" title="[1] Sobrecarga: Renda passiva ×2 por 15s">
+                        <div class="ability-status-dot"></div>
                         <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_overclock"></div></div>
                         <span class="ability-icon">⚡</span>
                         <div class="ability-info">
@@ -198,7 +221,8 @@
                             <span class="ability-sub">×2 DPS • 15s</span>
                         </div>
                     </button>
-                    <button class="ability-btn" id="abilityBtn_hyperclick" data-action="triggerAbility" data-target="hyperclick" title="[2] Hiper Foco: 100% de chance de clique crítico por 12s">
+                    <button class="ability-btn ability-hyperclick" id="abilityBtn_hyperclick" data-action="triggerAbility" data-target="hyperclick" title="[2] Hiper Foco: 100% de chance de clique crítico por 12s">
+                        <div class="ability-status-dot"></div>
                         <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_hyperclick"></div></div>
                         <span class="ability-icon">🎯</span>
                         <div class="ability-info">
@@ -209,7 +233,8 @@
                             <span class="ability-sub">100% Crítico</span>
                         </div>
                     </button>
-                    <button class="ability-btn" id="abilityBtn_dividend" data-action="triggerAbility" data-target="dividend" title="[3] Dividendos: Injeção imediata de caixa">
+                    <button class="ability-btn ability-dividend" id="abilityBtn_dividend" data-action="triggerAbility" data-target="dividend" title="[3] Dividendos: Injeção imediata de caixa">
+                        <div class="ability-status-dot"></div>
                         <div class="ability-progress-bar"><div class="ability-progress-fill" id="abilityCd_dividend"></div></div>
                         <span class="ability-icon">💰</span>
                         <div class="ability-info">
@@ -222,6 +247,7 @@
                     </button>
                 </div>
 
+                <!-- CONDUTO DE ASCENSÃO / PRESTÍGIO -->
                 <div class="prestige-progress-wrap">
                     <div class="prestige-progress-bar"><div class="prestige-progress-fill" id="prestigeProgressFill"></div></div>
                     <div class="prestige-progress-label" id="prestigeProgressLabel">Progresso para o próximo prestígio</div>
