@@ -28,6 +28,7 @@ import {
 import { initSkyline, syncSkyline, drawSkyline, pruneSkyline } from './skyline.js';
 import { ensureActiveContracts, recordContractProgress, updateContractBadge } from './contracts.js';
 import { initNewsTicker } from './news.js';
+import { initMarket, tickMarket, buyShares, sellShares, renderMarketUI, ASSETS } from './market.js';
 
 // Namespaces só para o console de depuração (ver `exposeDebugApi` no fim).
 import * as config from './config.js';
@@ -61,12 +62,23 @@ function doPrestige() {
 const ACTIONS = {
     prestige: doPrestige,
     toggleChart,
-    openModal: target => openModal(target),
+    openModal: target => {
+        openModal(target);
+        if (target === 'marketModal') renderMarketUI();
+    },
     closeModal: target => closeModal(target),
     setBulk: target => setBulkMode(target === 'max' ? 'max' : Number(target)),
     buyUpgrade: target => buyMoneyUpgrade(target),
     buyPrestige: target => buyPrestigeShopItem(target),
     triggerAbility: target => triggerAbility(target),
+    buyAsset: target => {
+        const [id, q] = target.split(':');
+        buyShares(id, q);
+    },
+    sellAsset: target => {
+        const [id, q] = target.split(':');
+        sellShares(id, q);
+    },
     exportSave,
     importSave: () => (el.importInput || document.getElementById('importInput')).click(),
     copySave: copySaveToClipboard,
@@ -275,6 +287,7 @@ function init() {
     initChart();
     initSkyline();
     initPixiEngine();
+    initMarket();
     updateDisplay();
     updateAbilitiesUI();
 
@@ -350,6 +363,7 @@ export function simulationTick() {
     tickGoldenEvents(deltaMs);
     runAI();
     checkAchievements(showAchievementBadge);
+    tickMarket(now);
 
     // 60 amostras a cada 500ms = histórico fiel de 30s de renda
     chartSampleTimer += deltaMs;

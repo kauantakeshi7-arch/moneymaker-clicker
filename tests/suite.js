@@ -25,6 +25,9 @@ import { getRelevantHeadline } from '../js/news.js';
 import {
     setSoundVolume, getSoundVolume, setMusicVolume, getMusicVolume
 } from '../js/utils.js';
+import {
+    initMarket, buyShares, sellShares, ASSETS, getCurrentPrice, applyNewsMarketShock
+} from '../js/market.js';
 
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
@@ -446,6 +449,50 @@ test('controles de áudio: sliders de volume respeitam teto [0, 1]', () => {
     assert(close(getMusicVolume(), 0.4), 'volume de música deve ser 0.4');
     setMusicVolume(2.0);
     assert(close(getMusicVolume(), 1.0), 'música deve ter cap em 1.0');
+});
+
+// ===== BOLSA DE VALORES & DAY TRADING =====
+
+test('bolsa de valores inicializa histórico de preços e limites min/max', () => {
+    initMarket();
+    assert(ASSETS.length === 3, 'devem existir 3 ativos voláteis', ASSETS.length);
+    for (const a of ASSETS) {
+        assert(a.history.length > 0, 'ativo deve ter histórico gerado', a.ticker);
+        const price = getCurrentPrice(a.id);
+        assert(price >= a.minPrice && price <= a.maxPrice, 'preço fora dos limites', { price, min: a.minPrice, max: a.maxPrice });
+    }
+});
+
+test('compra e venda de ações na bolsa calculam preço médio e saldo corretamente', () => {
+    reset();
+    initMarket();
+    const neo = ASSETS.find(a => a.id === 'neo');
+    neo.owned = 0;
+    neo.avgBuyPrice = 0;
+
+    gameState.money = 10000;
+    const priceBefore = getCurrentPrice('neo');
+    buyShares('neo', 5);
+
+    assert(neo.owned === 5, 'deveria ter comprado 5 cotas', neo.owned);
+    assert(close(neo.avgBuyPrice, priceBefore), 'preço médio de compra incorreto', { avg: neo.avgBuyPrice, priceBefore });
+    assert(close(gameState.money, 10000 - (5 * priceBefore)), 'saldo descontado incorretamente', gameState.money);
+
+    const moneyBeforeSell = gameState.money;
+    sellShares('neo', 5);
+    assert(neo.owned === 0, 'deveria ter vendido todas as cotas', neo.owned);
+    assert(neo.avgBuyPrice === 0, 'preço médio deveria zerar sem cotas');
+    assert(close(gameState.money, moneyBeforeSell + (5 * priceBefore)), 'saldo após venda incorreto');
+});
+
+test('notícia financeira aplica choque percentual no preço do ativo', () => {
+    initMarket();
+    const neo = ASSETS.find(a => a.id === 'neo');
+    const prevPrice = getCurrentPrice('neo');
+    applyNewsMarketShock('NEO', 0.20);
+    const newPrice = getCurrentPrice('neo');
+    assert(newPrice > prevPrice, 'choque positivo deveria elevar o preço', { prevPrice, newPrice });
+    assert(close(newPrice, +(prevPrice * 1.20).toFixed(2)), 'cálculo do choque incorreto', { prevPrice, newPrice });
 });
 
 /** Roda tudo e devolve o relatório. */

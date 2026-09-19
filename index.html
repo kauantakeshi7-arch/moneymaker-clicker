@@ -94,6 +94,9 @@
             <svg class="icon"><use href="#i-ledger"/></svg>
             <span class="badge" id="contractBadge" style="display:none;">!</span>
         </button>
+        <button class="icon-btn" data-action="openModal" data-target="marketModal" title="Bolsa de Valores (Day Trading)" aria-label="Bolsa de Valores (Day Trading)">
+            <span style="font-size: 15px; line-height: 1;">📈</span>
+        </button>
         <button class="icon-btn" data-action="openModal" data-target="infoModal" title="Como jogar" aria-label="Como jogar">
             <svg class="icon"><use href="#i-info"/></svg>
         </button>
@@ -496,6 +499,28 @@
             <button class="btn" data-action="closeModal" data-target="settingsModal">Fechar</button>
         </div>
         <input type="file" id="importInput" style="display:none;" accept=".txt">
+    </div>
+</div>
+
+<div id="marketModal" class="modal">
+    <div class="modal-content modal-wide modal-with-hero">
+        <div class="modal-hero-banner">
+            <img src="assets/images/splash_upgrades.jpg" alt="Terminal da Bolsa de Valores Cyberpunk" class="modal-hero-bg" style="filter: brightness(0.75) hue-rotate(170deg) contrast(1.2);">
+            <div class="modal-hero-gradient"></div>
+            <div class="modal-hero-content">
+                <div class="modal-hero-text">
+                    <div class="modal-hero-title">📈 BOLSA DE VALORES CYBERPUNK</div>
+                    <div class="modal-hero-sub">Terminal de Day Trading & Operações em Tempo Real</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body-pad">
+            <div class="modal-hint">
+                Compre na baixa e venda na alta! Os preços oscilam a cada 2.5s e reagem a furos de notícias econômicas.
+            </div>
+            <div id="marketContainer" class="modal-scroll"></div>
+            <button class="btn" data-action="closeModal" data-target="marketModal">Fechar Terminal</button>
+        </div>
     </div>
 </div>
 

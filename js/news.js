@@ -6,6 +6,7 @@ import { gameState } from './state.js';
 import { formatNumber, playHoverSound, playCashSound, showNotification } from './utils.js';
 import { addMoney, getClickValue, isFeverActive } from './economy.js';
 import { spawnClickParticle } from './vfx.js';
+import { applyNewsMarketShock } from './market.js';
 
 let tickerTrack = null;
 let tickerText = null;
@@ -13,6 +14,14 @@ let tickerContainer = null;
 let tickerInterval = null;
 let isGlitching = false;
 let newsIndex = 0;
+
+const MARKET_HEADLINES = [
+    { text: "🪙 Cripto Neon (NEO) dispara +22% após validação de protocolo em redes neurais!", ticker: 'NEO', shock: 0.22 },
+    { text: "💻 Titan Quantum (TTN) salta +16% após fechar megacontrato de servidores na nuvem!", ticker: 'TTN', shock: 0.16 },
+    { text: "🌐 Fundo Cyber 500 (CYB) registra alta firme de +7% com entrada de fundos soberanos.", ticker: 'CYB', shock: 0.07 },
+    { text: "📉 Correção pontual: Neon Coin (NEO) recua -12% em realização rápida de lucros.", ticker: 'NEO', shock: -0.12 },
+    { text: "🚀 Rali tecnológico: Titan Quantum (TTN) ganha mais +18% em pregão internacional!", ticker: 'TTN', shock: 0.18 }
+];
 
 const GENERAL_HEADLINES = [
     "Mercado global abre em alta expressiva após onda de investimentos do novo conglomerado.",
@@ -77,6 +86,13 @@ export function getRelevantHeadline() {
             text: `⭐ PRESTÍGIO NÍVEL ${gameState.prestigeLevel}: Conglomerado renasce com reputação lendária no setor.`,
             isBonus: false
         };
+    }
+
+    // 20% de chance de notícia de impacto na Bolsa de Valores
+    if (Math.random() < 0.20) {
+        const m = MARKET_HEADLINES[Math.floor(Math.random() * MARKET_HEADLINES.length)];
+        applyNewsMarketShock(m.ticker, m.shock);
+        return { text: m.text, isBonus: false };
     }
 
     const gen = GENERAL_HEADLINES[newsIndex % GENERAL_HEADLINES.length];

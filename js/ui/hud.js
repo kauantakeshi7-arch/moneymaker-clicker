@@ -145,19 +145,55 @@ export function updateDisplay() {
             refs.count.style.display = 'none';
         }
 
+        // Ciclo de receita visual pulsante
+        if (refs.cycleFill) {
+            if (owned > 0) {
+                const cycleDurations = [1200, 2400, 4000, 6000, 8500, 11000, 14000];
+                const dur = cycleDurations[i] || 3000;
+                const cycleProgress = (Date.now() % dur) / dur;
+                refs.cycleFill.style.width = `${(cycleProgress * 100).toFixed(1)}%`;
+            } else {
+                refs.cycleFill.style.width = '0%';
+            }
+        }
+
+        // Evolução visual de borda e insígnias de maestria
+        refs.card.classList.remove('mastery-bronze', 'mastery-silver', 'mastery-gold', 'mastery-diamond', 'mastery-quantum');
+        let masteryText = 'NÍVEL 0';
+        if (owned >= 200) {
+            refs.card.classList.add('mastery-quantum');
+            masteryText = '👑 QUÂNTICO';
+        } else if (owned >= 100) {
+            refs.card.classList.add('mastery-diamond');
+            masteryText = '💎 DIAMANTE';
+        } else if (owned >= 50) {
+            refs.card.classList.add('mastery-gold');
+            masteryText = '🥇 OURO';
+        } else if (owned >= 25) {
+            refs.card.classList.add('mastery-silver');
+            masteryText = '🥈 PRATA';
+        } else if (owned >= 10) {
+            refs.card.classList.add('mastery-bronze');
+            masteryText = '🥉 BRONZE';
+        }
+        if (refs.masteryBadge) setText(refs.masteryBadge, masteryText);
+
         // Barra de progresso para o próximo marco multiplicador
         if (refs.milestoneFill && refs.milestoneLabel) {
             const thresholds = MILESTONE_TIERS.map(t => t[0]).sort((a, b) => a - b);
             const nextMilestone = thresholds.find(t => t > owned);
             if (!nextMilestone) {
                 refs.milestoneFill.style.width = '100%';
-                setText(refs.milestoneLabel, `${owned} (MAX)`);
+                setText(refs.milestoneLabel, `${owned} ★ MÁXIMO`);
             } else {
                 const prevIdx = thresholds.indexOf(nextMilestone) - 1;
                 const prevMilestone = prevIdx >= 0 ? thresholds[prevIdx] : 0;
                 const mPct = Math.min(100, Math.max(0, ((owned - prevMilestone) / (nextMilestone - prevMilestone)) * 100));
                 refs.milestoneFill.style.width = `${mPct.toFixed(1)}%`;
-                setText(refs.milestoneLabel, `${owned}/${nextMilestone}`);
+                const diff = nextMilestone - owned;
+                const multTier = MILESTONE_TIERS.find(t => t[0] === nextMilestone);
+                const multVal = multTier ? multTier[1] : 2;
+                setText(refs.milestoneLabel, `${owned}/${nextMilestone} (Faltam ${diff} p/ ×${multVal})`);
             }
         }
     }

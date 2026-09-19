@@ -43,8 +43,16 @@ export function createUpgradeButtons() {
         card.setAttribute('role', 'button');
         card.innerHTML = `
             <div class="upgrade-qty"></div>
-            <div class="biz-icon-badge"><svg class="upgrade-icon"><use href="#${u.glyph}"/></svg></div>
-            <div class="upgrade-name">${u.name}</div>
+            <div class="biz-header-row">
+                <div class="biz-icon-badge"><svg class="upgrade-icon"><use href="#${u.glyph}"/></svg></div>
+                <div class="biz-title-wrap">
+                    <div class="upgrade-name">${u.name}</div>
+                    <div class="biz-tier-badge">NÍVEL 0</div>
+                </div>
+            </div>
+            <div class="biz-cycle-wrap">
+                <div class="biz-cycle-bar"><div class="biz-cycle-fill"></div></div>
+            </div>
             <div class="upgrade-cost">${formatNumber(getUpgradeCost(i))}</div>
             <div class="upgrade-income">+${formatNumber(getUpgradeIncome(i))}/s</div>
             <div class="biz-milestone-wrap">
@@ -82,7 +90,9 @@ export function createUpgradeButtons() {
             lock: card.querySelector('.upgrade-lock'),
             manager: card.querySelector('.manager-btn'),
             milestoneFill: card.querySelector('.biz-milestone-fill'),
-            milestoneLabel: card.querySelector('.biz-milestone-label')
+            milestoneLabel: card.querySelector('.biz-milestone-label'),
+            cycleFill: card.querySelector('.biz-cycle-fill'),
+            masteryBadge: card.querySelector('.biz-tier-badge')
         };
         cardRefs.push(refs);
         refs.manager.addEventListener('click', (e) => {
