@@ -52,24 +52,28 @@ body::after {
 }
 
 header {
-    background: rgba(10,12,24,0.88); backdrop-filter: blur(14px) saturate(140%);
-    padding: 8px 12px; border-bottom: 1px solid rgba(0,212,255,0.35);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 0 rgba(0,212,255,0.15) inset;
+    background: rgba(8, 11, 24, 0.94); backdrop-filter: blur(16px) saturate(140%);
+    padding: 6px 14px; border-bottom: 1px solid rgba(0,212,255,0.35);
+    box-shadow: 0 4px 28px rgba(0,0,0,0.5), 0 1px 0 rgba(0,212,255,0.2) inset;
     display: flex; align-items: center; justify-content: space-between;
-    gap: 8px; z-index: 100; overflow-x: auto;
+    gap: 12px; z-index: 100;
+}
+
+.header-left {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
 }
 
 .brand-chip {
     display: flex; align-items: center; gap: 8px; cursor: pointer;
-    padding: 4px 8px; border-radius: 9px;
-    background: rgba(0, 212, 255, 0.07);
+    padding: 4px 9px; border-radius: 9px;
+    background: rgba(0, 212, 255, 0.08);
     border: 1px solid rgba(0, 212, 255, 0.35);
     transition: all 0.2s ease; flex-shrink: 0;
 }
 .brand-chip:hover {
-    background: rgba(0, 212, 255, 0.15);
+    background: rgba(0, 212, 255, 0.16);
     border-color: var(--primary);
-    box-shadow: 0 0 16px rgba(0, 212, 255, 0.35);
+    box-shadow: 0 0 16px rgba(0, 212, 255, 0.4);
     transform: translateY(-1px);
 }
 .brand-chip:active { transform: scale(0.96); }
@@ -89,6 +93,53 @@ header {
     letter-spacing: 1.2px; text-transform: uppercase; margin-top: 1px;
 }
 
+/* Status de Conexão Corporativa */
+.header-status-pill {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 8px; border-radius: 6px;
+    background: rgba(0, 255, 136, 0.08);
+    border: 1px solid rgba(0, 255, 136, 0.28);
+}
+.header-status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--secondary);
+    box-shadow: 0 0 6px var(--secondary);
+    animation: statusBlink 2s infinite ease-in-out;
+}
+@keyframes statusBlink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+.header-status-code {
+    font-size: 8px; font-weight: 800; font-family: 'Orbitron', monospace;
+    color: var(--secondary); letter-spacing: 0.8px;
+}
+
+/* ===== CONSOLE DE TELEMETRIA CENTRAL ===== */
+.header-center {
+    flex: 1; display: flex; justify-content: center; min-width: 0;
+}
+.header-telemetry-console {
+    position: relative; display: flex; align-items: center;
+    background: linear-gradient(180deg, rgba(14, 22, 45, 0.9), rgba(7, 12, 26, 0.96));
+    border: 1px solid rgba(0, 212, 255, 0.32);
+    border-radius: 12px; padding: 3px 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.telemetry-bracket {
+    position: absolute; width: 6px; height: 6px; pointer-events: none;
+}
+.telemetry-bracket.tl { top: 2px; left: 2px; border-top: 1.5px solid var(--primary); border-left: 1.5px solid var(--primary); }
+.telemetry-bracket.tr { top: 2px; right: 2px; border-top: 1.5px solid var(--primary); border-right: 1.5px solid var(--primary); }
+.telemetry-bracket.bl { bottom: 2px; left: 2px; border-bottom: 1.5px solid var(--primary); border-left: 1.5px solid var(--primary); }
+.telemetry-bracket.br { bottom: 2px; right: 2px; border-bottom: 1.5px solid var(--primary); border-right: 1.5px solid var(--primary); }
+
+.header-stat-divider {
+    width: 1px; height: 26px;
+    background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+    margin: 0 4px; flex-shrink: 0;
+}
+
 /* ===== ÍCONES =====
    Todos herdam cor e tamanho do texto ao redor, então um único símbolo
    serve em qualquer contexto sem virar um arquivo novo. */
@@ -100,47 +151,78 @@ header {
 }
 .icon-lg { width: 1.6em; height: 1.6em; }
 
-/* ===== HIERARQUIA =====
-   Três níveis: o dinheiro e o botão de clique gritam, os negócios falam,
-   o resto sussurra. Antes tudo tinha a mesma borda e o mesmo peso. */
+/* ===== CARDS DE TELEMETRIA ===== */
 .stat-box {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid transparent;
-    border-radius: 10px; padding: 7px 11px; font-size: 11px;
-    display: flex; flex-direction: column; gap: 3px; white-space: nowrap;
-    transition: background 0.25s, border-color 0.25s;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 8px; padding: 4px 10px; font-size: 11px;
+    display: flex; flex-direction: column; gap: 2px; white-space: nowrap;
+    transition: all 0.2s ease;
 }
-.stat-box:hover { background: rgba(255,255,255,0.055); }
+.stat-box:hover { background: rgba(0, 212, 255, 0.06); }
 .stat-label {
-    color: var(--text-muted); font-size: 9.5px; letter-spacing: 0.6px;
-    text-transform: uppercase; display: flex; align-items: center; gap: 5px;
+    color: var(--text-secondary); font-size: 8px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 4px;
 }
-.stat-label .icon { opacity: 0.75; }
+.stat-label .icon { width: 11px; height: 11px; opacity: 0.85; stroke: var(--primary); }
 .stat-value {
-    color: var(--text-primary); font-weight: 700; font-size: 15px;
+    color: var(--text-primary); font-weight: 800; font-size: 14px;
     font-family: 'Orbitron', 'JetBrains Mono', monospace;
-    letter-spacing: -0.2px; transition: transform 0.15s;
+    letter-spacing: -0.2px; line-height: 1.15; transition: transform 0.15s;
 }
-/* O saldo é a informação nº 1 da tela: só ele recebe brilho e escala. */
-.stat-primary { background: rgba(0,212,255,0.07); border-color: rgba(0,212,255,0.28); }
+
+/* O saldo é o indicador primário do império: destaque com glow ciano */
+.stat-primary {
+    padding: 4px 14px; background: rgba(0, 212, 255, 0.08);
+    border-radius: 8px; border: 1px solid rgba(0, 212, 255, 0.25);
+}
 .stat-primary .stat-value {
-    color: var(--primary); font-size: 19px;
-    text-shadow: 0 0 18px rgba(0,212,255,0.45);
+    color: var(--primary); font-size: 17.5px; font-weight: 900;
+    text-shadow: 0 0 16px rgba(0, 212, 255, 0.55);
+}
+.stat-cashflow .stat-value {
+    color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+}
+.stat-prestige .stat-value {
+    color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+.stat-target .stat-value {
+    color: #a0aec0;
 }
 .stat-value.gold { color: var(--gold); }
 .stat-value.green { color: var(--green); }
 .stat-value.muted { color: var(--text-secondary); }
 .stat-value.pop { animation: statPop 0.25s ease; }
 
-.header-actions { display: flex; gap: 6px; position: relative; }
-.icon-btn {
-    display: grid; place-items: center; width: 34px; height: 32px;
-    font-size: 16px; border-radius: 8px; cursor: pointer; position: relative;
-    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
-    color: #cbd6e4; transition: all 0.18s;
+/* ===== AÇÕES DO TERMINAL ===== */
+.header-right {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
-.icon-btn:hover { color: var(--primary); border-color: rgba(0,212,255,0.5); background: rgba(0,212,255,0.1); }
-.icon-btn:active { transform: scale(0.94); }
+.header-actions { display: flex; gap: 6px; align-items: center; position: relative; }
+.icon-btn {
+    display: grid; place-items: center; width: 33px; height: 33px;
+    font-size: 15px; border-radius: 8px; cursor: pointer; position: relative;
+    background: linear-gradient(145deg, rgba(16, 24, 46, 0.9), rgba(8, 13, 27, 0.95));
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    color: #cbd6e4; transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.icon-btn:hover {
+    color: #ffffff; border-color: var(--primary);
+    background: rgba(0, 212, 255, 0.16);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 212, 255, 0.35);
+}
+.icon-btn:active { transform: scale(0.94) translateY(0); }
+
+.icon-btn-market:hover {
+    border-color: #00ff88; color: #00ff88;
+    box-shadow: 0 4px 14px rgba(0, 255, 136, 0.4);
+}
+.icon-btn-ach:hover {
+    border-color: #ffd700; color: #ffd700;
+    box-shadow: 0 4px 14px rgba(255, 215, 0, 0.4);
+}
 @keyframes statPop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
 
 main {
@@ -1422,16 +1504,29 @@ main::-webkit-scrollbar-thumb:hover {
 .chart-container.active { display: block; animation: modalFade 0.2s ease; }
 #progressChart { display: block; width: 100%; height: 100%; }
 
-@media (max-width: 600px) {
+@media (max-width: 960px) {
+    .header-status-pill { display: none; }
+    .stat-target { display: none; }
+}
+
+@media (max-width: 680px) {
     header {
         flex-wrap: wrap;
-        padding: 7px 8px; gap: 6px;
+        padding: 6px 8px; gap: 6px;
+    }
+    .header-center {
+        order: 3; width: 100%;
+    }
+    .header-telemetry-console {
+        width: 100%; justify-content: space-around; padding: 3px 4px;
     }
     .brand-chip { padding: 3px 6px; }
     .brand-chip-title { font-size: 9.5px; }
-    .stat-box { padding: 5px 8px; border-radius: 6px; }
-    .stat-label { font-size: 9px; }
-    .stat-value { font-size: 14px; }
+    .stat-box { padding: 3px 6px; }
+    .stat-label { font-size: 7.5px; }
+    .stat-value { font-size: 13px; }
+    .stat-primary .stat-value { font-size: 15px; }
+    .icon-btn { width: 30px; height: 30px; font-size: 14px; }
 
     main { padding: 8px; gap: 9px; }
     .info-grid { grid-template-columns: repeat(2, 1fr); }
